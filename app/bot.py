@@ -190,7 +190,7 @@ def region(update, context):
             return ConversationHandler.END 
 
         msg = (
-            f"Dati della regione:*{text}*\n\n"
+            f"Dati della regione: *{text}*\n\n"
             f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
         )
 
@@ -233,7 +233,7 @@ def province(update, context):
         return ConversationHandler.END 
 
     msg = (
-        f"Dati della provincia:*{text}*\n\n"
+        f"Dati della provincia: *{text}*\n\n"
         f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
     )
 
@@ -251,13 +251,31 @@ def province(update, context):
 
 def credits(update, context):
     """Return credits"""
-    update.message.reply_text("Descrizione dei comandi come /regione")
+    logger.info(f"User {update.message.from_user} requested the credits section")
+
+    msg = ("- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
+    "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
+    "- Bot Icon by Freepik (https://www.flaticon.com/)"
+    )
+
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
 def help(update, context):
     """Help function"""
     logger.info(f"User {update.message.from_user} requested the help")
-    update.message.reply_text("Descrizione dei comandi come /regione")
+
+    msg = (
+        "*Comandi disponibili*:\n\n"
+        "/italia - Dati aggregati a livello nazionale\n"
+        "/nuovi - Incremento dei casi attualmente positivi\n"
+        "/regione - Dati per regione\n"
+        "/provincia - Dati per provincia\n"
+        "/help - Istruzioni sull’utilizzo\n"
+        "/credits - Informazioni su questo bot"
+    )
+
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
 def cancel(update, context):
