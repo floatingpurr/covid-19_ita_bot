@@ -6,6 +6,8 @@ A Telegram bot providing the updated data of the COVID-19 (Coronavirus) outbreak
 
 This bot is currently operated by **@covid19_dati_italia_bot** on Telegram
 
+![alt text](_docs/imgs/bot.jpeg)
+
 Further info coming soon...
 
 ## Commands
@@ -22,4 +24,4 @@ Available commands (in Italian):
 ## Credits
 
 * Data Source: [Protezione Civile: Dati COVID-19 Italia](https://github.com/pcm-dpc/COVID-19)
-* Bot and repo icon by https://www.flaticon.com/
+* Bot and repo rainbow icon designed by Freepik (https://www.flaticon.com/)
