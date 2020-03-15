@@ -6,7 +6,7 @@ A Telegram bot providing the updated data of the COVID-19 (Coronavirus) outbreak
 
 This bot is currently operated by **@covid19_dati_italia_bot** on Telegram
 
-![Bot screeshot](_docs/imgs/bot_screen.jpeg)
+![Bot screeshot](_docs/imgs/bot_example.jpg)
 
 Further info coming soon...
 
