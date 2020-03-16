@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 
 REGION, PROVINCE = range(2)
 
+COMMANDS = (
+    "/italia - Dati aggregati a livello nazionale\n"
+    "/nuovi - Incremento dei casi attualmente positivi\n"
+    "/regione - Dati per regione\n"
+    "/provincia - Dati per provincia\n"
+    "/help - Istruzioni sull’utilizzo\n"
+    "/credits - Informazioni su questo bot\n\n"
+)
+
 def get_keyboard(keyboard_name):
     """get an generate a keyboard using stored data"""
 
@@ -79,6 +88,10 @@ def render_data_and_chart(data):
             'today' : today['totale_casi'] - yesterday['totale_casi'],
             'diff'  : (today['totale_casi'] - yesterday['totale_casi']) - (yesterday['totale_casi'] - day_before_yesterday['totale_casi'])
         },
+        'Tot. Casi' : {
+            'today' : today['totale_casi'],
+            'diff'  : today['totale_casi'] - yesterday['totale_casi']
+        },
     }
 
     for o in outline:
@@ -99,15 +112,10 @@ def start(update, context):
     msg = (
         "*Dati aggiornati dei casi di COVID-19 in Italia*\n\n"
         "_Dati e comandi disponibili_:\n\n"
-        "/italia - Dati aggregati a livello nazionale\n"
-        "/nuovi - Incremento dei casi attualmente positivi\n"
-        "/regione - Dati per regione\n"
-        "/provincia - Dati per provincia\n"
-        "/help - Istruzioni sull’utilizzo\n"
-        "/credits - Informazioni su questo bot\n\n"
+        f"{COMMANDS}"
 
    
-        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono aggiornati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#restiamoacasa*\n*#tuttoandràbene* 🌈"
     )
 
     # use ReplyKeyboardRemove() to clear stale keys
@@ -262,10 +270,12 @@ def credits(update, context):
     """Return credits"""
     logger.info(f"User {update.message.from_user} requested the credits section")
 
-    msg = ("- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
-    "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
-    "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
-    "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+    msg = (
+        "- [Contattami qui](https://twitter.com/i_m_andrea) per info e segnalazioni\n\n"
+        "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
+        "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
+        "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
+        "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
     )
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
@@ -277,12 +287,7 @@ def help(update, context):
 
     msg = (
         "*Comandi disponibili*:\n\n"
-        "/italia - Dati aggregati a livello nazionale\n"
-        "/nuovi - Incremento dei casi attualmente positivi\n"
-        "/regione - Dati per regione\n"
-        "/provincia - Dati per provincia\n"
-        "/help - Istruzioni sull’utilizzo\n"
-        "/credits - Informazioni su questo bot\n\n"
+        f"{COMMANDS}"
         "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
     )
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
@@ -304,7 +309,14 @@ def cancel(update, context):
 # This handler must be added last. 
 def unknown(update, context):
     """Unknown handler"""
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Non conosco questo comando")
+    msg = (
+        "Non conosco questo comando\n\n"
+        "Questo bot è in continuo aggiornamento, per cui può capitare che i comandi disponibili cambino nel tempo\n\n"
+        "I comandi attualmente disponibili sono:\n\n"
+        f"{COMMANDS}"
+    )
+
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
 def main():
