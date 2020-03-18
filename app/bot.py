@@ -301,9 +301,15 @@ def cancel(update, context):
     return ConversationHandler.END
 
 
-# def error(update, context):
-#     """Log Errors caused by Updates."""
-#     logger.warning('Update "%s" caused error "%s"', update, context.error)
+def error(update, context):
+    """Log Errors caused by Updates."""
+    logger.info(f"User {update} caused the error {context.error}")
+    msg = (
+        "Problema temporaneo sui dati.\nRiprova tra un attimo"
+    )
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+
+    return ConversationHandler.END 
 
 
 # This handler must be added last. 
@@ -351,7 +357,7 @@ def main():
 
     dp.add_handler(conv_handler)
 
-    #dp.add_error_handler(error)
+    dp.add_error_handler(error)
 
     dp.add_handler(MessageHandler(Filters.command, unknown))
 
