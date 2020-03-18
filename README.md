@@ -1,8 +1,8 @@
 # covid-19: italian data bot
 
-*#restiamoacasa* *#tuttoandràbene* 🌈
+**#restiamoacasa** **#tuttoandràbene** 🌈
 
-A Telegram bot providing the updated data of the COVID-19 (Coronavirus) outbreak in Italy.
+A Telegram bot providing the updated data of the COVID-19 (novel coronavirus) outbreak in Italy.
 
 This bot is currently operated by **[@covid19_dati_italia_bot](https://t.me/covid19_dati_italia_bot)** on Telegram
 
