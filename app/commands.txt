@@ -1,0 +1,6 @@
+italia - Dati aggregati a livello nazionale
+nuovi - Incremento dei casi attualmente positivi\n"
+regione - Dati per regione
+provincia - Dati per provincia
+help - Istruzioni sull’utilizzo
+credits - Informazioni su questo bot
