@@ -74,24 +74,19 @@ def render_data_and_chart(data):
     msg = ''
     today = data[-1]
     yesterday = data[-2]
-    day_before_yesterday = data[-3]
 
     outline = {
         'Positivi' : {
             'today' : today['totale_attualmente_positivi'],
             'diff'  : today['nuovi_attualmente_positivi']
         },
-       'Ricoverati' : {
-            'today' : today['totale_ospedalizzati'],
-            'diff'  : today['totale_ospedalizzati'] - yesterday['totale_ospedalizzati']
+        'Guariti' : {
+            'today' : today['dimessi_guariti'],
+            'diff'  : today['dimessi_guariti'] - yesterday['dimessi_guariti']
         },
        'Deceduti' : {
             'today' : today['deceduti'],
             'diff'  : today['deceduti'] - yesterday['deceduti']
-        },
-        'Nuovi casi' : {
-            'today' : today['totale_casi'] - yesterday['totale_casi'],
-            'diff'  : (today['totale_casi'] - yesterday['totale_casi']) - (yesterday['totale_casi'] - day_before_yesterday['totale_casi'])
         },
         'Tot. Casi' : {
             'today' : today['totale_casi'],
@@ -102,7 +97,9 @@ def render_data_and_chart(data):
     for o in outline:
         t = outline[o]['today']
         d = outline[o]['diff']
-        msg += f"\n`{o:>12}: {t:>6n} ({f'{d:+n}':>6})`"
+        if o == 'Tot. Casi':
+            msg += f"\n`_____________________________`"
+        msg += f"\n`{o:>11}: {t:>7n} ({f'{d:+n}':>6})`"
     
     chart = plot_cases(f'Trend ultimi {len(data)} giorni', data, 'totale_attualmente_positivi')
     msg += f'\n\n\n\n*Attualmente positivi*\n`{chart}`'
