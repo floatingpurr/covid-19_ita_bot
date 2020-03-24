@@ -14,6 +14,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# set locale
+locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
+
 
 REGION, PROVINCE = range(2)
 
@@ -26,12 +29,14 @@ COMMANDS = (
     "/credits - Informazioni su questo bot\n\n"
 )
 
+# the main report object
+R = Report()
+
 def get_keyboard(keyboard_name):
     """get an generate a keyboard using stored data"""
 
     # Build the keyboard dynamically
-    r = Report()
-    data_kb = r.get_keyboard(keyboard_name)
+    data_kb = R.get_keyboard(keyboard_name)
 
     if not data_kb:
         return None
@@ -126,8 +131,7 @@ def nation(update, context):
     """Render national data"""
     logger.info(f"User {update.message.from_user} requested national data")
     days = 7
-    r = Report()
-    data = r.get_total_cases(days)
+    data = R.get_total_cases(days)
 
     msg = (
         f"*Dati nazionali*\n\n"
@@ -143,8 +147,7 @@ def nation(update, context):
 def new_cases_per_region(update, context):
     """Today's cases per region"""
     logger.info(f"User {update.message.from_user} requested the ranking")
-    r = Report()
-    data = r.get_ranking()
+    data = R.get_ranking()
 
     if not data:
         # exit and use ReplyKeyboardRemove() to clear stale keys
@@ -197,8 +200,7 @@ def region(update, context):
         logger.info(f"User {update.message.from_user} requested data of {text}")
 
         days = 7
-        r = Report()
-        data = r.get_region_cases(text, days)
+        data = R.get_region_cases(text, days)
 
         if not data:
             # exit and use ReplyKeyboardRemove() to clear stale keys
@@ -239,8 +241,7 @@ def province(update, context):
     logger.info(f"User {update.message.from_user} requested data of {text}")
     
     days = 7
-    r = Report()
-    data = r.get_province_cases(text, days)
+    data = R.get_province_cases(text, days)
     
 
     if not data:
@@ -370,5 +371,4 @@ def main():
 
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
     main()
