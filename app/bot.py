@@ -135,7 +135,7 @@ def start(update, context):
         f"{COMMANDS}"
 
    
-        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono aggiornati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono diramati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#restiamoacasa*\n*#tuttoandràbene* 🌈"
     )
 
     # use ReplyKeyboardRemove() to clear stale keys
