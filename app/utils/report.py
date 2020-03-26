@@ -174,7 +174,7 @@ class Report(object):
         settings.MONGO_DB['keyboards'].create_index('keyboard_name')
 
 
-    def get_total_cases(self, days):
+    def get_national_total_cases(self, days):
         """ Get national cases of last `days` """
         data = list()
         for d in settings.MONGO_DB['nation'].find().sort([('data',-1)]).limit(days):
@@ -192,6 +192,95 @@ class Report(object):
         return data
 
 
+    def get_total_cases(self, region=None, limit=None):
+        """
+        Get today's total cases and differentials:
+        - region=None      for all the regions
+        - region='all'     for all the provinces
+        - region='foo'     for all the provinces of the region foo
+        
+        Use `limit` to limit the resultset
+        """
+
+        #TODO: use the aggreagation framework instead
+        date = self.get_meta()['reportDate']
+
+
+        yesterday = date - datetime.timedelta(days=1)
+        # lower bound date for the query (i.e., from yesterday at midnight)
+        yesterday = datetime.datetime.strptime(f'{yesterday.date()}', '%Y-%m-%d')
+
+
+        query = [{ 
+                    "$match" : { 
+                        # "denominazione_regione" : region
+                        "data" : {
+                            "$gte" : yesterday
+                        }
+                    }
+                },
+                {
+                    "$sort": { 
+                        "data" : 1 
+                    } 
+                },
+                {
+                    "$group": {
+                        # "_id": "$denominazione_provincia",
+                        "yesterday": {
+                            "$first": "$totale_casi"
+                        },
+                        "today": {
+                            "$last": "$totale_casi"
+                        },
+                    }
+                },
+                { 
+                    "$project": {
+                        "_id": 1,
+                        "totale_casi" : "$today",
+                        "diff": { "$subtract": [ "$today", "$yesterday" ] },
+                    }
+                },
+                {
+                    "$sort": { 
+                        "diff" : -1 
+                    } 
+                },
+        ]
+
+        # customize query
+        if region == None:
+            # get regional data
+            collection = 'regions'
+            query[2]['$group']['_id'] = "$denominazione_regione"
+        elif region == 'all':
+            # all the provinces
+            collection = 'provinces'
+            # remove In fase di definizione/aggiornamento from this output
+            query[0]['$match']["denominazione_provincia"] = {'$ne' : 'In fase di definizione/aggiornamento'}
+            query[2]['$group']['_id'] = "$denominazione_provincia"
+        else:
+            # get provinces data for a region
+            collection = 'provinces'
+            query[0]['$match']["denominazione_regione"] = region
+            query[2]['$group']['_id'] = "$denominazione_provincia"
+
+        if limit:
+            query.append(
+                {'$limit' : limit}
+            )
+
+
+        resultset = settings.MONGO_DB[collection].aggregate(query)
+        
+        data = list()
+
+        for d in resultset:
+            data.append(d)
+        return data
+
+
     def get_province_cases(self, province, days):
         """ Get cases of a `province` of last `days` """
         data = list()
@@ -201,11 +290,11 @@ class Report(object):
         return data
 
 
-    def get_ranking(self):
+    def get_regional_positive_cases(self):
         """Rank new cases per region"""
         #TODO: use the aggreagation framework instead
         date = self.get_meta()['reportDate']
         data = list()
-        for d in settings.MONGO_DB['regions'].find({'data': date}).sort([('nuovi_attualmente_positivi',-1)]):
+        for d in settings.MONGO_DB['regions'].find({'data': date}).sort([('totale_attualmente_positivi',-1)]):
             data.append(d)
         return data
