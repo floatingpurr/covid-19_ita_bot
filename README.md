@@ -15,10 +15,13 @@ Further info coming soon...
 Available commands (in Italian):
 
 * /italia - Dati aggregati a livello nazionale
-* /nuovi - Incremento dei casi attualmente positivi
 * /regione - Dati per regione
 * /provincia - Dati per provincia
-* /help - Istruzioni sull’utilizzo
+* /positivi_regione - Attualmente positivi per ogni regione
+* /nuovi_regione - Nuovi casi per ogni regione
+* /nuovi_provincia - Nuovi casi per provincia
+* /help - Istruzioni di utilizzo
+* /legenda - Legenda per capire i dati
 * /credits - Informazioni su questo bot
 
 ## Credits
