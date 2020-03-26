@@ -1,4 +1,4 @@
-# covid-19: italian data bot
+# covid-19: the Telegram bot for Italian data
 
 **#restiamoacasa** **#tuttoandràbene** 🌈
 
