@@ -224,8 +224,9 @@ def new_cases_per_province(update, context):
         update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
 
     msg = (
-        f"*Nuovi casi per provincia*\n_(I {limit} incrementi più rilevanti)_\n\n"
-        f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
+        f"*Nuovi casi per provincia*\n\n"
+        f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n\n" # take the date from the first returned doc
+        f"_I {limit} incrementi più rilevanti:_\n"
     )
 
     msg += render_table(
