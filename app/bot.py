@@ -22,10 +22,13 @@ REGION, PROVINCE = range(2)
 
 COMMANDS = (
     "/italia - Dati aggregati a livello nazionale\n"
-    "/nuovi - Incremento dei casi attualmente positivi\n"
     "/regione - Dati per regione\n"
     "/provincia - Dati per provincia\n"
-    "/help - Istruzioni sull’utilizzo\n"
+    "/positivi\_regione - Attualmente positivi per ogni regione\n"
+    "/nuovi\_regione - Nuovi casi per ogni regione\n"
+    "/nuovi\_provincia - Nuovi casi per provincia\n"
+    "/help - Istruzioni di utilizzo\n"
+    "/legenda - Legenda per capire i dati\n"
     "/credits - Informazioni su questo bot\n\n"
 )
 
@@ -100,10 +103,25 @@ def render_data_and_chart(data):
         if o == 'Tot. Casi':
             msg += f"\n`_____________________________`"
         msg += f"\n`{o:>11}: {t:>7n} ({f'{d:+n}':>6})`"
+
+    msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
     
-    chart = plot_cases(f'Trend ultimi {len(data)} giorni', data, 'totale_attualmente_positivi')
-    msg += f'\n\n\n\n*Attualmente positivi*\n`{chart}`'
+    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_attualmente_positivi')
+    msg += f'\n\n\n\n*Trend Attualmente Positivi*\n\n`{chart}`'
     return msg
+
+
+def render_table(data, label, tot_key, diff_key):
+    """ rendere a dynamic data table """
+    table = ''
+
+    for d in data:
+        item = d[label][:10] + (d[label][10:] and '.')
+        tot = d[tot_key]
+        diff = d[diff_key]
+        table += f"\n`{item:>11}: {tot:>7n} ({f'{diff:+n}':>6})`"
+
+    return table
 
 
 
@@ -128,39 +146,96 @@ def nation(update, context):
     """Render national data"""
     logger.info(f"User {update.message.from_user} requested national data")
     days = 7
-    data = R.get_total_cases(days)
+    data = R.get_national_total_cases(days)
 
     msg = (
         f"*Dati nazionali*\n\n"
         f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
     )
 
-    msg += render_data_and_chart(data)
+    msg += render_data_and_chart(data = data)
 
     # use ReplyKeyboardRemove() to clear stale keys
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
 
-def new_cases_per_region(update, context):
-    """Today's cases per region"""
-    logger.info(f"User {update.message.from_user} requested the ranking")
-    data = R.get_ranking()
+def positive_cases_per_region(update, context):
+    """Today's positive cases per region"""
+    logger.info(f"User {update.message.from_user} requested positive cases per region")
+    data = R.get_regional_positive_cases()
 
     if not data:
         # exit and use ReplyKeyboardRemove() to clear stale keys
         update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
 
     msg = (
-        f"Incremento degli *attualmente positivi*\n(_per regione_)\n\n"
+        f"*Attualmente Positivi per regione*\n\n"
         f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
     )
 
-    # build chart
-    ts = list()
-    for d in data:
-        region = d['denominazione_regione'][:16] + (d['denominazione_regione'][16:] and '.')
-        n = d["nuovi_attualmente_positivi"]
-        msg +=f"`\n {region:>19} {f'{n:+n}':>6}`"
+    msg += render_table(
+        data=data,
+        label='denominazione_regione', 
+        tot_key = "totale_attualmente_positivi",
+        diff_key = "nuovi_attualmente_positivi"
+        )
+
+    msg += "\n\n_(Tra parentesi l'incremento nelle ultime 24h)_"
+
+    # use ReplyKeyboardRemove() to clear stale keys
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+
+
+def new_cases_per_region(update, context):
+    """Today's new cases per region"""
+    logger.info(f"User {update.message.from_user} requested new cases per region")
+    data = R.get_total_cases()
+
+    if not data:
+        # exit and use ReplyKeyboardRemove() to clear stale keys
+        update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
+
+    msg = (
+        f"*Nuovi casi per regione*\n\n"
+        f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
+    )
+
+    msg += render_table(
+        data=data,
+        label='_id', 
+        tot_key = "totale_casi",
+        diff_key = "diff"
+        )
+
+    msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
+
+    # use ReplyKeyboardRemove() to clear stale keys
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+
+
+def new_cases_per_province(update, context):
+    """Today's new cases per province"""
+    logger.info(f"User {update.message.from_user} requested new cases per province")
+    limit = 25
+    data = R.get_total_cases(region='all', limit = limit)
+
+    if not data:
+        # exit and use ReplyKeyboardRemove() to clear stale keys
+        update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
+
+    msg = (
+        f"*Nuovi casi per provincia*\n_(I {limit} incrementi più rilevanti)_\n\n"
+        f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
+    )
+
+    msg += render_table(
+        data=data,
+        label='_id', 
+        tot_key = "totale_casi",
+        diff_key = "diff"
+        )
+
+    msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
 
     # use ReplyKeyboardRemove() to clear stale keys
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
@@ -198,6 +273,7 @@ def region(update, context):
 
         days = 7
         data = R.get_region_cases(text, days)
+        details = R.get_total_cases(region=text)
 
         if not data:
             # exit and use ReplyKeyboardRemove() to clear stale keys
@@ -210,6 +286,27 @@ def region(update, context):
         )
 
         msg += render_data_and_chart(data)
+
+        msg += '\n\n\n\n*Totale Casi per provincia*\n'
+
+        remainder = None # 'in fase di definizione/aggiornamento'
+        for d in details:
+            if d['_id'].lower() == 'in fase di definizione/aggiornamento':
+                remainder = d['totale_casi']
+                continue
+            elif len(d['_id']) > 11:
+                prov = d['_id'][:10] + '.'
+            else:
+                prov = d['_id']
+        
+            cases = d['totale_casi']
+            diff = d['diff']
+
+            msg += f"\n`{prov:>11}: {cases:>7n} ({f'{diff:+n}':>6})`"
+
+        msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
+
+        msg +=f'\n_{remainder} in fase di aggiornamento_'
 
         update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
@@ -227,7 +324,8 @@ def region(update, context):
 
     update.message.reply_text(
         'Selezionare una provincia',
-        reply_markup=reply_markup)
+        reply_markup=reply_markup
+        )
 
     return PROVINCE
 
@@ -254,26 +352,29 @@ def province(update, context):
     today_cases= data[-1]['totale_casi']
     yesterday_cases = data[-2]['totale_casi']
     delta = today_cases - yesterday_cases
-    msg += f"\n`{'Positivi':>12}: {today_cases:>6n} ({f'{delta:+n}':>6})`"
+    msg += f"\n`{'Tot. Casi':>12}: {today_cases:>6n} ({f'{delta:+n}':>6})`"
+
+    msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
     
-    chart = plot_cases(f'Trend ultimi {len(data)} giorni', data, 'totale_casi')
-    msg += f'\n\n\n\n*Casi positivi* (_attualmente e non_)\n`{chart}`'
+    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_casi')
+    msg += f'\n\n\n\n*Trend Totale Casi*\n\n`{chart}`'
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
 
 
-def credits(update, context):
+def key(update, context):
     """Return credits"""
-    logger.info(f"User {update.message.from_user} requested the credits section")
+    logger.info(f"User {update.message.from_user} requested the legenda")
 
     msg = (
-        "- [Contattami qui](https://twitter.com/i_m_andrea) per info e segnalazioni\n\n"
-        "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
-        "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
-        "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
-        "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "*Legenda*\n\n"
+        "- *Totale casi*: i casi totali censiti. In questo numero sono conteggiate:\n"
+        "\t\t- le persone attualmente positive al virus\n"
+        "\t\t- le persone guarite\n"
+        "\t\t- i decessi\n\n"
+        "- *Positivi*: il numero delle persone attualmente positive\n\n"
     )
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
@@ -288,6 +389,21 @@ def help(update, context):
         f"{COMMANDS}"
         "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
     )
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+
+
+def credits(update, context):
+    """Return credits"""
+    logger.info(f"User {update.message.from_user} requested the credits section")
+
+    msg = (
+        "- [Contatti](https://twitter.com/i_m_andrea) per info e segnalazioni\n\n"
+        "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
+        "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
+        "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
+        "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+    )
+
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
@@ -333,9 +449,12 @@ def main():
 
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('italia', nation))
-    dp.add_handler(CommandHandler('nuovi', new_cases_per_region))
+    dp.add_handler(CommandHandler('positivi_regione', positive_cases_per_region))
+    dp.add_handler(CommandHandler('nuovi_regione', new_cases_per_region))
+    dp.add_handler(CommandHandler('nuovi_provincia', new_cases_per_province))
     dp.add_handler(CommandHandler('help', help))
     dp.add_handler(CommandHandler('credits', credits))
+    dp.add_handler(CommandHandler('legenda', key))
 
     # Add conversation handler with the states REGION
     conv_handler = ConversationHandler(

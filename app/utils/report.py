@@ -226,7 +226,9 @@ class Report(object):
                 },
                 {
                     "$group": {
-                        # "_id": "$denominazione_provincia",
+                        "data": {
+                            "$last": "$data"
+                        },
                         "yesterday": {
                             "$first": "$totale_casi"
                         },
@@ -238,6 +240,7 @@ class Report(object):
                 { 
                     "$project": {
                         "_id": 1,
+                        "data" : 1,
                         "totale_casi" : "$today",
                         "diff": { "$subtract": [ "$today", "$yesterday" ] },
                     }
