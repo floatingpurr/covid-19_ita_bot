@@ -169,7 +169,7 @@ def positive_cases_per_region(update, context):
         update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
 
     msg = (
-        f"*Attualmente Positivi per regione*\n\n"
+        f"*Attualmente positivi per regione*\n\n"
         f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
     )
 
@@ -287,7 +287,7 @@ def region(update, context):
 
         msg += render_data_and_chart(data)
 
-        msg += '\n\n\n\n*Totale Casi per provincia*\n'
+        msg += '\n\n\n\n*Totale Casi per provincia*\*\n'
 
         remainder = None # 'in fase di definizione/aggiornamento'
         for d in details:
@@ -306,7 +306,7 @@ def region(update, context):
 
         msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
 
-        msg +=f'\n_{remainder} in fase di aggiornamento_'
+        msg +=f'\n\n_*{remainder} casi in fase di aggiornamento_'
 
         update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
@@ -370,8 +370,8 @@ def key(update, context):
 
     msg = (
         "*Legenda*\n\n"
-        "- *Totale casi*: i casi totali censiti. In questo numero sono conteggiate:\n"
-        "\t\t- le persone attualmente positive al virus\n"
+        "- *Totale casi*: i casi totali censiti. Questo valore considera:\n"
+        "\t\t- le persone attualmente positive\n"
         "\t\t- le persone guarite\n"
         "\t\t- i decessi\n\n"
         "- *Positivi*: il numero delle persone attualmente positive\n\n"
@@ -397,7 +397,7 @@ def credits(update, context):
     logger.info(f"User {update.message.from_user} requested the credits section")
 
     msg = (
-        "- [Contatti](https://twitter.com/i_m_andrea) per info e segnalazioni\n\n"
+        "- [Contatti](https://twitter.com/i_m_andrea) per info e segnalazioni su questo bot\n\n"
         "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
         "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
         "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
