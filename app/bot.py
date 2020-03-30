@@ -80,20 +80,20 @@ def render_data_and_chart(data):
 
     outline = {
         'Positivi' : {
-            'today' : today['totale_attualmente_positivi'],
-            'diff'  : today['nuovi_attualmente_positivi']
+            'today' : int(today['totale_attualmente_positivi']),
+            'diff'  : int(today['nuovi_attualmente_positivi'])
         },
         'Guariti' : {
-            'today' : today['dimessi_guariti'],
-            'diff'  : today['dimessi_guariti'] - yesterday['dimessi_guariti']
+            'today' : int(today['dimessi_guariti']),
+            'diff'  : int(today['dimessi_guariti']) - int(yesterday['dimessi_guariti'])
         },
        'Deceduti' : {
-            'today' : today['deceduti'],
-            'diff'  : today['deceduti'] - yesterday['deceduti']
+            'today' : int(today['deceduti']),
+            'diff'  : int(today['deceduti']) - int(yesterday['deceduti'])
         },
         'Tot. Casi' : {
-            'today' : today['totale_casi'],
-            'diff'  : today['totale_casi'] - yesterday['totale_casi']
+            'today' : int(today['totale_casi']),
+            'diff'  : int(today['totale_casi']) - int(yesterday['totale_casi'])
         },
     }
 
@@ -475,7 +475,7 @@ def main():
 
     dp.add_handler(conv_handler)
 
-    dp.add_error_handler(error)
+    #dp.add_error_handler(error)
 
     dp.add_handler(MessageHandler(Filters.command, unknown))
 
