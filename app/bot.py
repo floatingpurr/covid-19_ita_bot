@@ -475,7 +475,8 @@ def main():
 
     dp.add_handler(conv_handler)
 
-    #dp.add_error_handler(error)
+    if misc.get_env_variable('CONTEXT') == 'Production':
+        dp.add_error_handler(error)
 
     dp.add_handler(MessageHandler(Filters.command, unknown))
 
