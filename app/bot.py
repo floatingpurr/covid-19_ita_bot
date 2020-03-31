@@ -3,15 +3,22 @@
 
 import logging
 import locale
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode
+from functools import wraps
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode, ChatAction
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 from utils import misc
 from utils.report import Report
 
 
+if misc.get_env_variable('CONTEXT') == 'Production':
+    LEVEL = logging.INFO
+else:
+    LEVEL = logging.DEBUG
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=LEVEL)
+
 logger = logging.getLogger(__name__)
 
 # set locale
@@ -34,6 +41,18 @@ COMMANDS = (
 
 # the main report object
 R = Report()
+
+
+def send_typing_action(func):
+    """Sends typing action while processing func command."""
+
+    @wraps(func)
+    def command_func(update, context, *args, **kwargs):
+        context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+        return func(update, context,  *args, **kwargs)
+
+    return command_func
+
 
 def get_keyboard(keyboard_name):
     """get an generate a keyboard using stored data"""
@@ -124,7 +143,7 @@ def render_table(data, label, tot_key, diff_key):
     return table
 
 
-
+@send_typing_action
 def start(update, context):
     """Getting started with this bot"""
     logger.info(f"User {update.message.from_user} started the bot")
@@ -142,6 +161,7 @@ def start(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN,reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
+@send_typing_action
 def nation(update, context):
     """Render national data"""
     logger.info(f"User {update.message.from_user} requested national data")
@@ -159,6 +179,7 @@ def nation(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
 
+@send_typing_action
 def positive_cases_per_region(update, context):
     """Today's positive cases per region"""
     logger.info(f"User {update.message.from_user} requested positive cases per region")
@@ -186,6 +207,7 @@ def positive_cases_per_region(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
 
+@send_typing_action
 def new_cases_per_region(update, context):
     """Today's new cases per region"""
     logger.info(f"User {update.message.from_user} requested new cases per region")
@@ -213,6 +235,7 @@ def new_cases_per_region(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
 
+@send_typing_action
 def new_cases_per_province(update, context):
     """Today's new cases per province"""
     logger.info(f"User {update.message.from_user} requested new cases per province")
@@ -242,6 +265,7 @@ def new_cases_per_province(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
 
+@send_typing_action
 def choose_region(update, context):
     """A function for managing the first step of a conversation for regions and provinces data"""
 
@@ -262,7 +286,8 @@ def choose_region(update, context):
     update.message.reply_text(msg, reply_markup=reply_markup)
     return REGION
 
-    
+
+@send_typing_action  
 def region(update, context):
     """Function for handling data of a region"""
     choice = context.user_data['choice']
@@ -331,6 +356,7 @@ def region(update, context):
     return PROVINCE
 
 
+@send_typing_action
 def province(update, context):
     """A function for getting data of a province"""
     text = update.message.text
@@ -365,6 +391,7 @@ def province(update, context):
     return ConversationHandler.END
 
 
+@send_typing_action
 def key(update, context):
     """Return credits"""
     logger.info(f"User {update.message.from_user} requested the legenda")
@@ -381,6 +408,7 @@ def key(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
+@send_typing_action
 def help(update, context):
     """Help function"""
     logger.info(f"User {update.message.from_user} requested the help")
@@ -393,6 +421,7 @@ def help(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
+@send_typing_action
 def credits(update, context):
     """Return credits"""
     logger.info(f"User {update.message.from_user} requested the credits section")
@@ -408,6 +437,7 @@ def credits(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
+@send_typing_action
 def cancel(update, context):
     """Stop all"""
     logger.info(f"User {update.message.from_user} canceled the conversation.")
@@ -416,6 +446,7 @@ def cancel(update, context):
     return ConversationHandler.END
 
 
+@send_typing_action
 def error(update, context):
     """Log Errors caused by Updates."""
     logger.info(f"User {update} caused the error {context.error}")
@@ -428,6 +459,7 @@ def error(update, context):
 
 
 # This handler must be added last. 
+@send_typing_action
 def unknown(update, context):
     """Unknown handler"""
     msg = (
