@@ -80,8 +80,8 @@ def render_data_and_chart(data):
 
     outline = {
         'Positivi' : {
-            'today' : int(today['totale_attualmente_positivi']),
-            'diff'  : int(today['nuovi_attualmente_positivi'])
+            'today' : int(today['totale_positivi']),
+            'diff'  : int(today['variazione_totale_positivi'])
         },
         'Guariti' : {
             'today' : int(today['dimessi_guariti']),
@@ -93,7 +93,7 @@ def render_data_and_chart(data):
         },
         'Tot. Casi' : {
             'today' : int(today['totale_casi']),
-            'diff'  : int(today['totale_casi']) - int(yesterday['totale_casi'])
+            'diff'  : int(today['nuovi_positivi'])
         },
     }
 
@@ -106,7 +106,7 @@ def render_data_and_chart(data):
 
     msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
     
-    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_attualmente_positivi')
+    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_positivi')
     msg += f'\n\n\n\n*Trend Attualmente Positivi*\n\n`{chart}`'
     return msg
 
@@ -176,8 +176,8 @@ def positive_cases_per_region(update, context):
     msg += render_table(
         data=data,
         label='denominazione_regione', 
-        tot_key = "totale_attualmente_positivi",
-        diff_key = "nuovi_attualmente_positivi"
+        tot_key = "totale_positivi",
+        diff_key = "variazione_totale_positivi"
         )
 
     msg += "\n\n_(Tra parentesi l'incremento nelle ultime 24h)_"

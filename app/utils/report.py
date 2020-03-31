@@ -298,6 +298,6 @@ class Report(object):
         #TODO: use the aggreagation framework instead
         date = self.get_meta()['reportDate']
         data = list()
-        for d in settings.MONGO_DB['regions'].find({'data': date}).sort([('totale_attualmente_positivi',-1)]):
+        for d in settings.MONGO_DB['regions'].find({'data': date}).sort([('totale_positivi',-1)]):
             data.append(d)
         return data

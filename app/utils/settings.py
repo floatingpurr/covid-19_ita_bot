@@ -18,7 +18,7 @@ DATA = {
     'regions' : {
         'url' : misc.get_env_variable('REGIONS'),
         'indexes' : [
-            pymongo.IndexModel([("data", pymongo.DESCENDING), ("nuovi_attualmente_positivi", pymongo.DESCENDING)]),
+            pymongo.IndexModel([("data", pymongo.DESCENDING), ("variazione_totale_positivi", pymongo.DESCENDING)]),
             pymongo.IndexModel([("denominazione_regione", pymongo.TEXT)]),
         ]
     },
