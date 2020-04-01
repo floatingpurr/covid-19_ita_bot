@@ -192,7 +192,7 @@ class Report(object):
         return data
 
 
-    def get_total_cases(self, region=None, limit=None):
+    def get_total_cases(self, region=None, offset=None, limit=None):
         """
         Get today's total cases and differentials:
         - region=None      for all the regions
@@ -247,7 +247,7 @@ class Report(object):
                 },
                 {
                     "$sort": { 
-                        "diff" : -1 
+                        "diff" : -1
                     } 
                 },
         ]
@@ -268,6 +268,11 @@ class Report(object):
             collection = 'provinces'
             query[0]['$match']["denominazione_regione"] = region
             query[2]['$group']['_id'] = "$denominazione_provincia"
+
+        if offset:
+            query.append(
+                {'$skip' : offset}
+            )
 
         if limit:
             query.append(

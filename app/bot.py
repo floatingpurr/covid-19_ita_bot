@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # set locale
 locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
 
-
+IT = 0
 REGION, PROVINCE = range(2)
 
 COMMANDS = (
@@ -238,19 +238,43 @@ def new_cases_per_region(update, context):
 @send_typing_action
 def new_cases_per_province(update, context):
     """Today's new cases per province"""
-    logger.info(f"User {update.message.from_user} requested new cases per province")
-    limit = 25
-    data = R.get_total_cases(region='all', limit = limit)
 
-    if not data:
-        # exit and use ReplyKeyboardRemove() to clear stale keys
-        update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
+    page_size = 25
 
-    msg = (
-        f"*Nuovi casi per provincia*\n\n"
-        f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n\n" # take the date from the first returned doc
-        f"_I {limit} incrementi più rilevanti:_\n"
-    )
+    text = update.message.text
+
+    msg = f"*Nuovi casi per provincia*\n\n"
+
+    if text != '/next': # page 0
+        logger.info(f"User {update.message.from_user} requested new cases per province")
+
+        context.chat_data['offset'] = page_size
+        data = R.get_total_cases(region='all', limit = page_size)
+        if not data:
+            # exit and use ReplyKeyboardRemove() to clear stale keys
+            update.message.reply_text('Nessun altro dato disponibile', reply_markup=ReplyKeyboardRemove())
+            return ConversationHandler.END 
+
+        msg += f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n\n" # take the date from the first returned doc
+        msg += f"_I {page_size} incrementi più rilevanti:_\n"
+
+
+    else:
+        logger.info(f"User {update.message.from_user} requested /next {context.chat_data['offset']}")
+
+        data = R.get_total_cases(region='all', limit = page_size, offset=context.chat_data['offset'] )
+
+        if not data:
+            # exit and use ReplyKeyboardRemove() to clear stale keys
+            update.message.reply_text('Nessun altro dato disponibile', reply_markup=ReplyKeyboardRemove())
+            return ConversationHandler.END 
+
+        msg += f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n\n" # take the date from the first returned doc
+        msg += f"_Gli incrementi più rilevanti_\n" 
+        msg += f"_(dal {context.chat_data['offset']+1}° al {context.chat_data['offset'] + len(data)}°):_\n"
+        # set the new offset
+        context.chat_data['offset'] += page_size
+
 
     msg += render_table(
         data=data,
@@ -259,10 +283,13 @@ def new_cases_per_province(update, context):
         diff_key = "diff"
         )
 
-    msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
+    msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_\n\n'
+    msg += '_Premi /next per la pagina successiva_'
 
     # use ReplyKeyboardRemove() to clear stale keys
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+
+    return IT
 
 
 @send_typing_action
@@ -276,7 +303,7 @@ def choose_region(update, context):
 
     # save the user choice for the conversation
     text = update.message.text
-    context.user_data['choice'] = text
+    context.chat_data['choice'] = text
 
     if text == '/regione':
         msg = 'Selezionare una regione'
@@ -290,7 +317,7 @@ def choose_region(update, context):
 @send_typing_action  
 def region(update, context):
     """Function for handling data of a region"""
-    choice = context.user_data['choice']
+    choice = context.chat_data['choice']
     text = update.message.text
 
     if choice == '/regione':
@@ -484,10 +511,27 @@ def main():
     dp.add_handler(CommandHandler('italia', nation))
     dp.add_handler(CommandHandler('positivi_regione', positive_cases_per_region))
     dp.add_handler(CommandHandler('nuovi_regione', new_cases_per_region))
-    dp.add_handler(CommandHandler('nuovi_provincia', new_cases_per_province))
+    #dp.add_handler(CommandHandler('nuovi_provincia', new_cases_per_province))
     dp.add_handler(CommandHandler('help', help))
     dp.add_handler(CommandHandler('credits', credits))
     dp.add_handler(CommandHandler('legenda', key))
+
+
+    # Add conversation handler with the states REGION
+    new_cases_conv_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('nuovi_provincia', new_cases_per_province)
+            ],
+
+        states={
+            IT: [CommandHandler('next', new_cases_per_province)],
+
+        },
+
+        fallbacks=[CommandHandler('nuovi_provincia', new_cases_per_province)]
+    )
+
+    dp.add_handler(new_cases_conv_handler)
 
     # Add conversation handler with the states REGION
     conv_handler = ConversationHandler(
