@@ -466,10 +466,9 @@ def credits(update, context):
 
 @send_typing_action
 def cancel(update, context):
-    """Stop all"""
+    """Stop a conversation"""
     logger.info(f"User {update.message.from_user} canceled the conversation.")
-    update.message.reply_text('Operazione annullata',
-                              reply_markup=ReplyKeyboardRemove())
+    #update.message.reply_text(reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
@@ -507,17 +506,17 @@ def main():
 
     dp = updater.dispatcher
 
+    # Basic command handlers
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('italia', nation))
     dp.add_handler(CommandHandler('positivi_regione', positive_cases_per_region))
     dp.add_handler(CommandHandler('nuovi_regione', new_cases_per_region))
-    #dp.add_handler(CommandHandler('nuovi_provincia', new_cases_per_province))
     dp.add_handler(CommandHandler('help', help))
     dp.add_handler(CommandHandler('credits', credits))
     dp.add_handler(CommandHandler('legenda', key))
 
 
-    # Add conversation handler with the states REGION
+    # Add conversation handler with the states REGION 
     new_cases_conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('nuovi_provincia', new_cases_per_province)
@@ -528,10 +527,13 @@ def main():
 
         },
 
-        fallbacks=[CommandHandler('nuovi_provincia', new_cases_per_province)]
+        fallbacks=[MessageHandler(Filters.command, cancel)],
+
+        allow_reentry=True
     )
 
-    dp.add_handler(new_cases_conv_handler)
+    # Command handlers GROUP 1
+    dp.add_handler(new_cases_conv_handler, 1)
 
     # Add conversation handler with the states REGION
     conv_handler = ConversationHandler(
@@ -546,15 +548,18 @@ def main():
 
         },
 
-        fallbacks=[CommandHandler('annulla', cancel)]
+        fallbacks=[MessageHandler(Filters.command, cancel)],
+
+        allow_reentry=True
     )
 
-    dp.add_handler(conv_handler)
+    # Command handlers GROUP 2
+    dp.add_handler(conv_handler, 2)
 
     if misc.get_env_variable('CONTEXT') == 'Production':
         dp.add_error_handler(error)
 
-    dp.add_handler(MessageHandler(Filters.command, unknown))
+    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/next)$')), unknown))
 
     # Start the Bot
     updater.start_polling()
