@@ -464,11 +464,9 @@ def credits(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
 
-@send_typing_action
 def cancel(update, context):
     """Stop a conversation"""
-    logger.info(f"User {update.message.from_user} canceled the conversation.")
-    #update.message.reply_text(reply_markup=ReplyKeyboardRemove())
+    logger.info(f"User {update.message.from_user} cancelled the conversation.")
     return ConversationHandler.END
 
 
