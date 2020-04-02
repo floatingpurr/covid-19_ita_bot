@@ -543,8 +543,8 @@ def main():
             ],
 
         states={
-            REGION: [MessageHandler(Filters.text, region)],
-            PROVINCE : [MessageHandler(Filters.text, province)],
+            REGION: [MessageHandler(Filters.text & (~ Filters.command), region)],
+            PROVINCE : [MessageHandler(Filters.text & (~ Filters.command), province)],
 
         },
 
