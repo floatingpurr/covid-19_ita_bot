@@ -12,17 +12,7 @@ Further info coming soon...
 
 ## Commands
 
-Available commands (in Italian):
-
-* /italia - Dati aggregati a livello nazionale
-* /regione - Dati per regione
-* /provincia - Dati per provincia
-* /positivi_regione - Attualmente positivi per ogni regione
-* /nuovi_regione - Nuovi casi per ogni regione
-* /nuovi_provincia - Nuovi casi per provincia
-* /help - Istruzioni di utilizzo
-* /legenda - Legenda per capire i dati
-* /credits - Informazioni su questo bot
+[Available commands](app/commands.txt) (in Italian)
 
 ## Credits
 
