@@ -513,7 +513,7 @@ def broadcast(update, context):
     """Actual sending function (broadcast)"""
 
     i = 0
-    for i,chat in enumerate(context.dispatcher.chat_data.keys()):
+    for i,chat in enumerate(context.dispatcher.chat_data.keys(), start=1):
         if i != 0 and i % 30 == 0:
             time.sleep(1) # avoids the bot ban :)
         logger.info(f"Sending data to {chat}...")
