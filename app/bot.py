@@ -517,7 +517,10 @@ def broadcast(update, context):
         if i != 0 and i % 30 == 0:
             time.sleep(1) # avoids the bot ban :)
         logger.info(f"Sending data to {chat}...")
-        context.bot.send_message(chat_id=chat, text=update.message.text)
+        try:
+            context.bot.send_message(chat_id=chat, text=update.message.text)
+        except Exception as e:
+            print(e)
 
     msg = f'{i} Messaggi inviati 👍'
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
