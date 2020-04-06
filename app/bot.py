@@ -3,9 +3,10 @@
 
 import logging
 import locale
+import time
 from functools import wraps
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode, ChatAction
-from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, PicklePersistence
 
 from utils import misc
 from utils.report import Report
@@ -24,9 +25,14 @@ logger = logging.getLogger(__name__)
 # set locale
 locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
 
+# Conversation states
 IT = 0
 REGION, PROVINCE = range(2)
+CHECK, BROADCAST = range(2)
+FEEDBACK = 0
+SEND_REPLY = 0
 
+# Commands rendering
 COMMANDS = (
     "/italia - Dati aggregati a livello nazionale\n"
     "/regione - Dati per regione\n"
@@ -34,6 +40,7 @@ COMMANDS = (
     "/positivi\_regione - Attualmente positivi per ogni regione\n"
     "/nuovi\_regione - Nuovi casi per ogni regione\n"
     "/nuovi\_provincia - Nuovi casi per provincia\n"
+    "/feedback - invia un feedback o segnala un problema\n"
     "/help - Istruzioni di utilizzo\n"
     "/legenda - Legenda per capire i dati\n"
     "/credits - Informazioni su questo bot\n\n"
@@ -131,7 +138,7 @@ def render_data_and_chart(data):
 
 
 def render_table(data, label, tot_key, diff_key):
-    """ rendere a dynamic data table """
+    """ render a dynamic data table """
     table = ''
 
     for d in data:
@@ -420,7 +427,7 @@ def province(update, context):
 
 @send_typing_action
 def key(update, context):
-    """Return credits"""
+    """Return the data key"""
     logger.info(f"User {update.message.from_user} requested the legenda")
 
     msg = (
@@ -465,7 +472,7 @@ def credits(update, context):
 
 
 def cancel(update, context):
-    """Stop a conversation"""
+    """Stop a conversation (generic fallback)"""
     logger.info(f"User {update.message.from_user} cancelled the conversation.")
     return ConversationHandler.END
 
@@ -479,7 +486,90 @@ def error(update, context):
     )
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
-    return ConversationHandler.END 
+    return ConversationHandler.END
+
+
+
+@send_typing_action
+def msg(update, context):
+    """Broadcast handler"""
+    update.message.reply_text('Tell me...', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return CHECK
+
+
+@send_typing_action
+def check(update, context):
+    """ Check the secret """
+    if update.message.text == misc.get_env_variable('DEV_PASS'):
+        update.message.reply_text('Insert broadcast message', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+        return BROADCAST
+    else:
+        update.message.reply_text('Bye', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+        return ConversationHandler.END
+
+
+@send_typing_action
+def broadcast(update, context):
+    """Actual sending function (broadcast)"""
+
+    i = 0
+    for i,chat in enumerate(context.dispatcher.chat_data.keys()):
+        if i != 0 and i % 30 == 0:
+            time.sleep(1) # avoids the bot ban :)
+        logger.info(f"Sending data to {chat}...")
+        context.bot.send_message(chat_id=chat, text=update.message.text)
+
+    msg = f'{i} Messaggi inviati 👍'
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return ConversationHandler.END
+    
+
+
+@send_typing_action
+def feedback(update, context):
+    """Feedback handler"""
+    logger.info(f"User {update.message.from_user} request /feedback")
+    update.message.reply_text('Scrivi qui di seguito un feedback su questo bot', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return FEEDBACK
+    
+
+@send_typing_action
+def send_feedback(update, context):
+    """Send a feedback"""
+    logger.info(f"User {update.message.from_user} sent a feedback")
+    feedback = f'{update.message.from_user.first_name} with id {update.message.from_user.id} wrote:\n\n{update.message.text}'
+    context.bot.send_message(chat_id=misc.get_env_variable('DEV'), text=feedback)
+    msg = 'Feedback inviato, grazie!'
+    update.message.reply_text(msg, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return ConversationHandler.END
+
+
+@send_typing_action
+def reply(update, context):
+    """Reply handler"""
+    splitted_text = update.message.text.split()
+    id = splitted_text[1]
+    pwd = splitted_text[2]
+
+    if pwd != misc.get_env_variable('DEV_PASS'):
+        update.message.reply_text('Bye', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+        return ConversationHandler.END
+
+    context.chat_data['reply_to'] = id
+    msg = f'Replying to *{id}* ...'
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return SEND_REPLY
+
+
+@send_typing_action
+def send_reply(update, context):
+    """Send a reply"""
+    id = context.chat_data['reply_to']
+    context.bot.send_message(chat_id=id, text='Questo messaggio è visibile solo a te:\n\n' + update.message.text)
+    msg = f'Replied to {id}!'
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
+    return ConversationHandler.END
+
 
 
 # This handler must be added last. 
@@ -497,10 +587,14 @@ def unknown(update, context):
 
 
 def main():
+
+    # Create the Updater and pass it your bot's token.
+    pp = PicklePersistence(filename='_data/conversationbot')
+
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater(misc.get_env_variable('API_KEY'), use_context=True)
+    updater = Updater(misc.get_env_variable('API_KEY'), persistence=pp, use_context=True)
 
     dp = updater.dispatcher
 
@@ -514,50 +608,90 @@ def main():
     dp.add_handler(CommandHandler('legenda', key))
 
 
-    # Add conversation handler with the states REGION 
+    # Add conversation handler with the states IT 
     new_cases_conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('nuovi_provincia', new_cases_per_province)
             ],
-
         states={
             IT: [CommandHandler('next', new_cases_per_province)],
-
         },
-
         fallbacks=[MessageHandler(Filters.command, cancel)],
-
         allow_reentry=True
     )
 
     # Command handlers GROUP 1
     dp.add_handler(new_cases_conv_handler, 1)
 
-    # Add conversation handler with the states REGION
+    # Add conversation handler with the states REGION ans PROVINCE
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('provincia', choose_region),
             CommandHandler('regione', choose_region)
             ],
-
         states={
             REGION: [MessageHandler(Filters.text & (~ Filters.command), region)],
             PROVINCE : [MessageHandler(Filters.text & (~ Filters.command), province)],
-
         },
-
         fallbacks=[MessageHandler(Filters.command, cancel)],
-
         allow_reentry=True
     )
 
     # Command handlers GROUP 2
     dp.add_handler(conv_handler, 2)
 
+    # Add conversation handler for broadcasting
+    broad_conv_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('msg', msg)
+            ],
+        states={
+            CHECK: [MessageHandler(Filters.text & (~ Filters.command), check)],
+            BROADCAST: [MessageHandler(Filters.text & (~ Filters.command), broadcast)],
+        },
+        fallbacks=[MessageHandler(Filters.command, cancel)],
+        allow_reentry=True
+    )
+
+    # Command handlers GROUP 3
+    dp.add_handler(broad_conv_handler, 3)
+
+
+    # Add conversation handler for feedbacks
+    feedback_conv_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('feedback', feedback)
+            ],
+        states={
+            FEEDBACK: [MessageHandler(Filters.text & (~ Filters.command), send_feedback)],
+        },
+        fallbacks=[MessageHandler(Filters.command, cancel)],
+        allow_reentry=True
+    )
+
+    # Command handlers GROUP 4
+    dp.add_handler(feedback_conv_handler, 4)
+
+
+    # Add conversation handler for replies
+    reply_conv_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('reply', reply)
+            ],
+        states={
+            SEND_REPLY: [MessageHandler(Filters.text & (~ Filters.command), send_reply)],
+        },
+        fallbacks=[MessageHandler(Filters.command, cancel)],
+        allow_reentry=True
+    )
+
+    # Command handlers GROUP 5
+    dp.add_handler(reply_conv_handler, 5)
+
     if misc.get_env_variable('CONTEXT') == 'Production':
         dp.add_error_handler(error)
 
-    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/next)$')), unknown))
+    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/next|\/msg|\/feedback|\/reply)$')), unknown))
 
     # Start the Bot
     updater.start_polling()
