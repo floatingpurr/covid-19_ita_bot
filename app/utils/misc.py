@@ -63,19 +63,49 @@ def json_dates_hook(dict):
         return dict
 
 
-def chartify(title, data):
+def chartify(title, data, auto=False):
     """Create an ascii chart passing a list of tuples [('label', int)]"""
-    chart = ''
+
+    if auto == True:
+
+        chart = ''
     
-    graph = Pyasciigraph(
-        line_length=8,
-        min_graph_length=15,
-        separator_length=2,
-        titlebar='-',
-        float_format='{0:.0f}'
-        )
-    
-    for line in  graph.graph(title, data):
-        chart += line+'\n'
-    
+        graph = Pyasciigraph(
+            line_length=8,
+            min_graph_length=15,
+            separator_length=2,
+            titlebar='-',
+            float_format='{0:.0f}'
+            )
+        
+        for line in  graph.graph(title, data):
+            chart += line+'\n'
+
+        return chart
+
+    # if we get there, then use manual mode
+
+    chart = title + '\n'
+    chart += '-'*30 + '\n'
+
+    max_value = max(count for _, count in data)
+    min_value = min(count for _, count in data)
+    increment = (max_value - min_value) / 12
+
+    for label, count in data:
+
+        bar_chunks, remainder = divmod(int((count - min_value) * 8 / increment), 8)
+
+        # Main width
+        bar = '█' * bar_chunks
+
+        # Fractional part
+        if remainder > 0:
+            bar += chr(ord('█') + (8 - remainder))
+
+        # If the bar is empty, add a left one-eighth block
+        bar = bar or '▏'
+
+        chart += f'{count:>7n} {bar:<13} | {label:>6}\n'
+
     return chart
