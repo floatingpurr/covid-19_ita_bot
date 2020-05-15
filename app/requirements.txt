@@ -3,4 +3,5 @@ requests==2.23.0
 pymongo==3.10.1
 dateparser==0.7.4
 ascii-graph==1.5.1
-ipython
+ipython==7.13.0
+matplotlib==3.2.1

@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+  app:
+    container_name: app
+    build: ./app 
+    volumes:
+      - ./app/:/app
+    #command: tail -F anything # keep it running
+    working_dir: /app
+    env_file:
+      - .env
+    #entrypoint: ['sh', '/app/init.sh']
+    depends_on:
+        - mongo
+  
+  mongo:
+    image: mongo:4
+    container_name: mongodb
+    restart: always
+    volumes:
+      - mongodata:/data/db
+    expose:
+      - 27017
+
+
+volumes:
+  mongodata:

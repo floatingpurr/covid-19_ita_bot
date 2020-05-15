@@ -8,6 +8,8 @@ import json
 import hashlib
 import dateparser
 from ascii_graph import Pyasciigraph
+import matplotlib.pyplot as plt
+import io
 
 
 
@@ -109,3 +111,42 @@ def chartify(title, data, auto=False):
         chart += f'{count:>7n} {bar:<13} | {label:>6}\n'
 
     return chart
+
+
+def plotify(title, data, key):
+    """Return a bar chart (in raw bytes)"""
+
+    color_map = {
+        'totale_positivi' : 'mediumvioletred',
+        'totale_casi' : 'orangered'
+    }
+
+    # create a new figure
+    plt.figure()
+
+    dates = list()
+    values = list()
+
+    for d in data:
+        dates.append(f"{d['data']:%d-%m}")
+        values.append(int(d[key]))
+
+
+
+    # Add title and axes names
+    plt.title(title)
+    # plt.xlabel('giorni')
+    # plt.ylabel(key)
+
+
+    plt.plot(dates, values, marker='o', color=color_map[key], linewidth=3)
+    plt.xticks(rotation=90)
+    bottom, top = plt.ylim()
+    plt.ylim(bottom=0, top=top*1.1)
+    plt.tight_layout()
+
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    return buf

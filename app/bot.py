@@ -38,8 +38,8 @@ COMMANDS = (
     "/regione - Dati per regione\n"
     "/provincia - Dati per provincia\n"
     "/positivi\_regione - Attualmente positivi per ogni regione\n"
-    "/nuovi\_regione - Nuovi casi per ogni regione\n"
-    "/nuovi\_provincia - Nuovi casi per provincia\n"
+    "/nuovi\_regione - Casi per ogni regione\n"
+    "/nuovi\_provincia - Casi per ogni provincia\n"
     "/feedback - invia un feedback o segnala un problema\n"
     "/help - Istruzioni di utilizzo\n"
     "/legenda - Legenda per capire i dati\n"
@@ -97,8 +97,12 @@ def plot_cases(title, data, key):
     return misc.chartify(title, ts)
 
 
-def render_data_and_chart(data):
-    """Return the message `msg` + the chart to render for national and regional data"""
+def render_data_and_chart(data, ascii=False):
+    """
+    Return the message `msg` + the chart to render for national and regional data
+    Set ascii to True to get an ascii bar chart with the message
+    
+    """
 
     msg = ''
     today = data[-1]
@@ -131,9 +135,11 @@ def render_data_and_chart(data):
         msg += f"\n`{o:>11}: {t:>7n} ({f'{d:+n}':>6})`"
 
     msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
-    
-    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_positivi')
-    msg += f'\n\n\n\n*Trend Attualmente Positivi*\n\n`{chart}`'
+
+    if ascii==True:
+        chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_positivi')
+        msg += f'\n\n\n\n*Trend Attualmente Positivi*\n\n`{chart}`'
+
     return msg
 
 
@@ -172,7 +178,7 @@ def start(update, context):
 def nation(update, context):
     """Render national data"""
     logger.info(f"User {update.message.from_user} requested national data")
-    days = 7
+    days = 15
     data = R.get_national_total_cases(days)
 
     msg = (
@@ -182,8 +188,11 @@ def nation(update, context):
 
     msg += render_data_and_chart(data = data)
 
-    # use ReplyKeyboardRemove() to clear stale keys
+    # get plot
+    plot = misc.plotify(title='Trend Attualmente Positivi (Italia)', data = data, key = 'totale_positivi')
+
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+    update.message.reply_photo(caption='Trend Attualmente Positivi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
 
 
 @send_typing_action
@@ -225,7 +234,7 @@ def new_cases_per_region(update, context):
         update.message.reply_text('Nessun dato disponibile', reply_markup=ReplyKeyboardRemove())
 
     msg = (
-        f"*Nuovi casi per regione*\n\n"
+        f"*Casi per regione*\n\n"
         f"Aggiornamento: *{data[0]['data']:%a %d %B h.%H:%M}*\n" # take the date from the first returned doc
     )
 
@@ -250,7 +259,7 @@ def new_cases_per_province(update, context):
 
     text = update.message.text
 
-    msg = f"*Nuovi casi per provincia*\n\n"
+    msg = f"*Casi per provincia*\n\n"
 
     if text != '/next': # page 0
         logger.info(f"User {update.message.from_user} requested new cases per province")
@@ -291,7 +300,7 @@ def new_cases_per_province(update, context):
         )
 
     msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_\n\n'
-    msg += '_Premi /next per la pagina successiva_'
+    msg += '_Digita /next per la pagina successiva_'
 
     # use ReplyKeyboardRemove() to clear stale keys
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
@@ -331,7 +340,7 @@ def region(update, context):
         # return regional data
         logger.info(f"User {update.message.from_user} requested data of {text}")
 
-        days = 7
+        days = 15
         data = R.get_region_cases(text, days)
         details = R.get_total_cases(region=text)
 
@@ -368,7 +377,12 @@ def region(update, context):
 
         msg +=f'\n\n_*{remainder} casi in fase di aggiornamento_'
 
+
+        # get plot
+        plot = misc.plotify(title=f'Trend Attualmente Positivi ({text})', data = data, key = 'totale_positivi')
+
         update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+        update.message.reply_photo(caption=f'Trend Attualmente Positivi ({text})', photo=plot, reply_markup=ReplyKeyboardRemove())
 
         return ConversationHandler.END
 
@@ -396,14 +410,14 @@ def province(update, context):
     text = update.message.text
     logger.info(f"User {update.message.from_user} requested data of {text}")
     
-    days = 7
+    days = 15
     data = R.get_province_cases(text, days)
     
 
     if not data:
         # exit and use ReplyKeyboardRemove() to clear stale keys
         update.message.reply_text(f'Nessun dato disponibile per {text}', reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END 
+        return ConversationHandler.END
 
     msg = (
         f"Dati della provincia: *{text}*\n\n"
@@ -417,10 +431,13 @@ def province(update, context):
 
     msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
     
-    chart = plot_cases(f'Ultimi {len(data)} giorni', data, 'totale_casi')
-    msg += f'\n\n\n\n*Trend Totale Casi*\n\n`{chart}`'
+
+    # get plot
+    plot = misc.plotify(title=f'Trend Totale Casi ({text})', data = data, key = 'totale_casi')
+
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+    update.message.reply_photo(caption=f'Trend Totale Casi ({text})', photo=plot, reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
 

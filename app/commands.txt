@@ -2,8 +2,8 @@ italia - Dati aggregati a livello nazionale
 regione - Dati per regione
 provincia - Dati per provincia
 positivi_regione - Attualmente positivi per ogni regione
-nuovi_regione - Nuovi casi per ogni regione
-nuovi_provincia - Nuovi casi per provincia
+nuovi_regione - Casi per ogni regione
+nuovi_provincia - Casi per ogni provincia
 feedback - invia un feedback o segnala un problema
 help - Istruzioni di utilizzo
 legenda - Legenda per capire i dati
