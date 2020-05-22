@@ -73,8 +73,6 @@ def get_keyboard(keyboard_name):
     keyboard = []
     i = 0
     for option in data_kb:
-        if option.lower() == 'in fase di definizione/aggiornamento':
-            continue
         line, remainder = divmod(i, 2)
         # display two keys per line
         if remainder == 0:
@@ -451,7 +449,7 @@ def key(update, context):
 
     msg = (
         "*Legenda*\n\n"
-        "- *Totale casi*: i casi totali censiti. Questo valore comprende:\n"
+        "- *Totale casi*: i casi totali censiti. Questo valore considera:\n"
         "\t\t- le persone attualmente positive\n"
         "\t\t- le persone guarite\n"
         "\t\t- i decessi\n\n"
