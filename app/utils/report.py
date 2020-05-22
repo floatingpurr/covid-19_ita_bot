@@ -66,7 +66,7 @@ class Report(object):
             print('updating data...') # Move this print to the logger
 
             # set metadata
-            self._set_meta(d.md5())
+            self._set_meta(d.md5(), d.get_date())
 
             # preprocess data
             data = d.get_json_data()
@@ -103,7 +103,7 @@ class Report(object):
         return settings.MONGO_DB.meta.find_one()
 
 
-    def _set_meta(self, md5, date=None):
+    def _set_meta(self, md5, date):
         """Set report metadata"""
 
         # drop the meta collection
@@ -113,7 +113,7 @@ class Report(object):
         settings.MONGO_DB.meta.insert_one({
             'timestamp' : datetime.datetime.now(),
             'md5' : md5,
-            #'reportDate' :date,
+            'reportDate' :date,
         })
         
 
