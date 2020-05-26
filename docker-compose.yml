@@ -3,9 +3,9 @@ version: '3.7'
 services:
   app:
     container_name: app
-    build: ./app 
-    volumes:
-      - ./app/:/app
+    build: . 
+    # volumes:
+    #   - ./app/:/app
     #command: tail -F anything # keep it running
     working_dir: /app
     env_file:

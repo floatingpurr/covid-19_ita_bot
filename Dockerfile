@@ -9,13 +9,12 @@ RUN sed -i -e 's/# it_IT.UTF-8 UTF-8/it_IT.UTF-8 UTF-8/' /etc/locale.gen && loca
 # log messages immediately dumped to the stream 
 ENV PYTHONUNBUFFERED 1
 
-# prepare requirements dir
-RUN mkdir /packaging
-WORKDIR /packaging
 
-# Copy requieremnts file
-COPY ./requirements.txt /packaging
+RUN mkdir /app
+WORKDIR /app
+COPY ./app/ .
 
-WORKDIR /packaging
-
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+
+
