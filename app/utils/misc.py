@@ -3,6 +3,7 @@ Collection of utils
 """
 
 import os
+import gc
 import requests
 import json
 import hashlib
@@ -149,4 +150,15 @@ def plotify(title, data, key):
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
+
+    ### Release memory
+    # Clear the current axes.
+    plt.cla() 
+    # Clear the current figure.
+    plt.clf() 
+    # Closes all the figure windows.
+    plt.close('all')   
+    #plt.close(fig)
+    gc.collect()
+
     return buf
