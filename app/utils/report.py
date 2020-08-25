@@ -3,6 +3,8 @@ import json
 from . import settings
 from . import misc
 
+from telegram import ReplyKeyboardRemove, ParseMode
+from telegram.ext import Updater, PicklePersistence
 
 class Data(object):
     """Basic data class."""
@@ -93,11 +95,55 @@ class Report(object):
                 print('Renaming collections...')  # Move this print to the logger
                 settings.MONGO_DB[f'{report}_temp'].rename(report, dropTarget=True)
 
+            print('Data Updatated!')
+
+            self.notify_users()
+
+
             # set keyboards options according to new values
             self._set_keyboards()
-           
 
-            
+    def notify_users(self):
+        """Notify Bot Users"""
+
+        from bot import render_data_and_chart
+
+        # users file
+        pp = PicklePersistence(filename='_data/conversationbot')
+
+        updater = Updater(misc.get_env_variable('API_KEY'), persistence=pp)
+
+        days = 15
+        data = self.get_national_total_cases(days)
+
+        msg = (
+            f"*Dati nazionali*\n\n"
+            f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
+        )
+
+        msg += render_data_and_chart(data = data)
+
+        # get plot
+        plot = misc.plotify(title='Trend Attualmente Positivi (Italia)', data = data, key = 'totale_positivi')
+
+        i = 0
+        for i, chat in enumerate(updater.dispatcher.chat_data.keys(), start=1):
+            if i != 0 and i % 30 == 0:
+                time.sleep(1) # avoids the bot ban :)
+            print(f"Sending data to {chat}...")
+            try:
+                updater.bot.send_message(chat_id=chat, text='*Aggiornamento dati COVID19 Italia*', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+                updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+                updater.bot.send_photo(chat_id=chat, caption='Trend Attualmente Positivi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
+
+            except Exception as e:
+                print(e)
+
+
+        print(f'{i} notifications sent 👍')
+
+
+
     def get_meta(self):
         """Get report Metadata"""
         return settings.MONGO_DB.meta.find_one()
