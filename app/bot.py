@@ -169,7 +169,7 @@ def start(update, context):
         f"{COMMANDS}"
 
    
-        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono diramati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) sono rilasciati soltanto a fini informativi. Gli aggiornamenti vengono diramati dalla Protezione Civile ogni giorno attorno alle ore 18:00.\n\n*#tuttoandràbene* 🌈"
     )
 
     # use ReplyKeyboardRemove() to clear stale keys
@@ -184,7 +184,7 @@ def nation(update, context):
     data = R.get_national_total_cases(days)
 
     msg = (
-        f"*Dati nazionali*\n\n"
+        f"🇮🇹 *Dati nazionali*\n\n"
         f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
     )
 
@@ -469,7 +469,7 @@ def help(update, context):
     msg = (
         "*Comandi disponibili*:\n\n"
         f"{COMMANDS}"
-        "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "*#tuttoandràbene* 🌈"
     )
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
@@ -484,7 +484,7 @@ def credits(update, context):
         "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
         "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
         "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
-        "*#restiamoacasa*\n*#tuttoandràbene* 🌈"
+        "*#tuttoandràbene* 🌈"
     )
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)

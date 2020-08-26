@@ -118,14 +118,14 @@ class Report(object):
         data = self.get_national_total_cases(days)
 
         msg = (
-            f"*Dati nazionali*\n\n"
-            f"Aggiornamento: *{data[-1]['data']:%a %d %B h.%H:%M}*\n"
+            f"*Aggiornamento dati COVID19 Italia*\n"
+            f"*{data[-1]['data']:%a %d %B h.%H:%M}*\n\n"
+            f"🇮🇹 *Dati nazionali*:\n"
         )
 
         msg += render_data_and_chart(data = data)
 
-        # get plot
-        plot = misc.plotify(title='Trend Attualmente Positivi (Italia)', data = data, key = 'totale_positivi')
+        msg += "\n\n_Digita_ /help _per i dettagli_"
 
         i = 0
         for i, chat in enumerate(updater.dispatcher.chat_data.keys(), start=1):
@@ -133,9 +133,7 @@ class Report(object):
                 time.sleep(1) # avoids the bot ban :)
             print(f"Sending data to {chat}...")
             try:
-                updater.bot.send_message(chat_id=chat, text='*Aggiornamento dati COVID19 Italia*', parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
                 updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
-                updater.bot.send_photo(chat_id=chat, caption='Trend Attualmente Positivi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
 
             except Exception as e:
                 print(e)
