@@ -302,7 +302,7 @@ def new_cases_per_province(update, context):
         )
 
     msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_\n\n'
-    msg += '_Digita /next per la pagina successiva_'
+    msg += '_Digita_ /next _per la pagina successiva_'
 
     # use ReplyKeyboardRemove() to clear stale keys
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
