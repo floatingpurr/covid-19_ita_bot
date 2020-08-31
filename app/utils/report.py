@@ -64,12 +64,26 @@ class Report(object):
         """download new data and save into mongo if they are fresher"""
         d = Data()
 
-        if not self.get_meta() or d.md5() != self.get_meta()['md5']:
+        # get data status
+        meta = self.get_meta()
+
+        # get files md5
+        md5 = d.md5()
+
+        # Update just if:
+        # - this is the first run (i.e., `not met`  )
+        # - or if there are stale data (i.e,. d.md5() != meta['md5'] ) AND there is not another running update (i.e., self.meta['locked']) == True))
+
+        if not meta or md5 != meta['md5']:
             # update report in MongoDB.
             print('updating data...') # Move this print to the logger
 
+            if meta['locked'] == True:
+                print('Collections are locked')
+                return
+
             # set metadata
-            self._set_meta(d.md5(), d.get_date())
+            self._set_meta(md5, d.get_date())
 
             # preprocess data
             data = d.get_json_data()
@@ -80,7 +94,7 @@ class Report(object):
 
                 collection = settings.MONGO_DB[f'{report}_temp']
 
-                # drop collection an relative indexes
+                # drop collection and relative indexes
                 collection.drop()
 
                 # update data
@@ -96,13 +110,16 @@ class Report(object):
                 print('Renaming collections...')  # Move this print to the logger
                 settings.MONGO_DB[f'{report}_temp'].rename(report, dropTarget=True)
 
+            # set keyboards options according to new values
+            self._set_keyboards()
+
+            # remove lock
+            self._unlock_collection()
+
             print('Data Updatated!')
 
             self.notify_users()
 
-
-            # set keyboards options according to new values
-            self._set_keyboards()
 
     def notify_users(self):
         """Notify Bot Users"""
@@ -131,7 +148,6 @@ class Report(object):
         for i, chat in enumerate(updater.dispatcher.chat_data.keys(), start=1):
             if i != 0 and i % 30 == 0:
                 time.sleep(1) # avoids the bot ban :)
-            print(f"Sending data to {chat}...")
             try:
                 updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
@@ -139,7 +155,7 @@ class Report(object):
                 print(e)
 
 
-        print(f'{i} notifications sent 👍')
+        print(f'{i} notification(s) sent 👍')
 
 
 
@@ -158,9 +174,14 @@ class Report(object):
         settings.MONGO_DB.meta.insert_one({
             'timestamp' : datetime.datetime.now(),
             'md5' : md5,
-            'reportDate' :date,
+            'reportDate' : date,
+            'locked' : True,
         })
-        
+
+
+    def _unlock_collection(self):
+        """Release the lock on the collection to allow further updates"""
+        settings.MONGO_DB.meta.update_one({}, {"$set": {'locked': False}})
 
     def get_keyboard(self, keyboard_name):
         """Return a list of keyboard options according to its name"""
