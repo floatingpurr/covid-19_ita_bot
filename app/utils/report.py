@@ -70,6 +70,13 @@ class Report(object):
         # get files md5
         md5 = d.md5()
 
+        try:
+            print(meta)
+            print(f"md5 from files {md5} // md5 from db {meta['md5']} // equal = {md5 == meta['md5']}")
+            
+        except:
+            print("Cannot get md5 from db (probably it's a first run)")
+
         # Update just if:
         # - this is the first run (i.e., `not met`  )
         # - or if there are stale data (i.e,. d.md5() != meta['md5'] ) AND there is not another running update (i.e., self.meta['locked']) == True))
@@ -78,9 +85,12 @@ class Report(object):
             # update report in MongoDB.
             print('updating data...') # Move this print to the logger
 
-            if meta['locked'] == True:
-                print('Collections are locked')
-                return
+            try:
+                if meta['locked'] == True:
+                    print('Collections are locked')
+                    return
+            except:
+                print("Cannot get locking info (probably it's a first run)")
 
             # set metadata
             self._set_meta(md5, d.get_date())
@@ -145,17 +155,18 @@ class Report(object):
         msg += "\n\n_Digita_ /help _per i dettagli_"
 
         i = 0
+        sent = 0
         for i, chat in enumerate(updater.dispatcher.chat_data.keys(), start=1):
             if i != 0 and i % 30 == 0:
                 time.sleep(1) # avoids the bot ban :)
             try:
                 updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
-
+                sent += 1
             except Exception as e:
-                print(e)
+                pass
 
 
-        print(f'{i} notification(s) sent 👍')
+        print(f'{sent} notification(s) sent 👍')
 
 
 
