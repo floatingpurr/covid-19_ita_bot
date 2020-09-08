@@ -11,6 +11,7 @@ import dateparser
 from ascii_graph import Pyasciigraph
 import matplotlib.pyplot as plt
 import io
+from . import settings
 
 
 
@@ -46,11 +47,16 @@ def save_data(url, file):
 def md5(dir):
     """get the MD5 checksum of files in a dir reading chunks of 4096 bytes"""
 
-    files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
+
+    files = [ 
+        settings.DATA['nation']['file_name'],
+        settings.DATA['regions']['file_name'],
+        settings.DATA['provinces']['file_name'],
+        ]
 
     hash_md5 = hashlib.md5()
     for f in files:
-        with open(dir+f, "rb") as f:
+        with open(dir+'/'+f, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
                     

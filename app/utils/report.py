@@ -13,16 +13,7 @@ class Data(object):
 
     def __init__(self):
         """create a Data Object and get data"""
-        self._fetch_data()
         self.data = None
-
-
-    def _fetch_data(self):
-        """Fetch and save official data into files"""
-
-        print('dowloading data...') # Move this print to the logger
-        for file in settings.DATA.keys():
-            misc.save_data(settings.DATA[file]['url'], settings.DATA_PATH+f'{file}.json')
 
 
     def md5(self):
@@ -35,7 +26,7 @@ class Data(object):
         self.data = dict()
 
         for file in settings.DATA.keys():
-            with open(settings.DATA_PATH+f'{file}.json') as f:
+            with open(settings.DATA_PATH+f'/{settings.DATA[file]["file_name"]}') as f:
                 self.data[file] = json.load(f, object_hook=misc.json_dates_hook)
         return self.data
 

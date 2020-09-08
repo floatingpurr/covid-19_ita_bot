@@ -10,20 +10,20 @@ import os
 # data collection and related info
 DATA = {
     'nation' : {
-        'url' : misc.get_env_variable('NATION'),
+        'file_name' : misc.get_env_variable('NATION'),
         'indexes' : [
             pymongo.IndexModel([("data", pymongo.DESCENDING)])
         ],
     }, 
     'regions' : {
-        'url' : misc.get_env_variable('REGIONS'),
+        'file_name' : misc.get_env_variable('REGIONS'),
         'indexes' : [
             pymongo.IndexModel([("data", pymongo.DESCENDING), ("variazione_totale_positivi", pymongo.DESCENDING)]),
             pymongo.IndexModel([("denominazione_regione", pymongo.TEXT)]),
         ]
     },
     'provinces' : {
-        'url' : misc.get_env_variable('PROVINCES'),
+        'file_name' : misc.get_env_variable('PROVINCES'),
         'indexes' : [
             pymongo.IndexModel([("data", pymongo.DESCENDING), ("totale_casi", pymongo.DESCENDING)]),
             pymongo.IndexModel([("denominazione_provincia", pymongo.TEXT)]),
@@ -32,8 +32,8 @@ DATA = {
 }
 
 
-# Path for downloaded files
-DATA_PATH = os.path.dirname(os.path.dirname(__file__))+'/_data/'
+# Path for downloaded files (in the repository)
+DATA_PATH = os.path.dirname(os.path.dirname(__file__))+'/_data/repo/dati-json'
 
 
 # MongoDB details
