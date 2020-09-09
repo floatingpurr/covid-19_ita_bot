@@ -11,7 +11,6 @@ import dateparser
 from ascii_graph import Pyasciigraph
 import matplotlib.pyplot as plt
 import io
-from . import settings
 
 
 
@@ -47,6 +46,8 @@ def save_data(url, file):
 def md5(dir):
     """get the MD5 checksum of files in a dir reading chunks of 4096 bytes"""
 
+    # ugly way to avoid circular imports
+    from . import settings
 
     files = [ 
         settings.DATA['nation']['file_name'],
