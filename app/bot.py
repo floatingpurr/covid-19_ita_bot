@@ -129,6 +129,8 @@ def render_data_and_chart(data, ascii=False):
         },
     }
 
+    msg += f"\nNuovi casi: *{int(today['nuovi_positivi']):n}*\n"
+
     for o in outline:
         t = outline[o]['today']
         d = outline[o]['diff']
