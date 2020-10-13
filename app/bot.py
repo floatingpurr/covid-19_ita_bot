@@ -109,6 +109,7 @@ def render_data_and_chart(data, ascii=False):
     msg = ''
     today = data[-1]
     yesterday = data[-2]
+    day_before_yesterday = data[-3]
 
     outline = {
         'Positivi' : {
@@ -127,11 +128,20 @@ def render_data_and_chart(data, ascii=False):
             'today' : int(today['totale_casi']),
             'diff'  : int(today['nuovi_positivi'])
         },
+        'Tamponi' : {
+            'today' : int(today['tamponi']) - int(yesterday['tamponi']),
+            'diff'  : (int(today['tamponi']) - int(yesterday['tamponi'])) - (int(yesterday['tamponi']) - int(day_before_yesterday['tamponi']))
+        }
     }
 
-    msg += f"\nNuovi casi: *{int(today['nuovi_positivi']):n}*\n"
+    # Recap
+    msg += f"\nNuovi casi: *{int(today['nuovi_positivi']):n}*"
+    # Number of tests
+    msg += f"\nTamponi: *{outline['Tamponi']['today']:n}* _({outline['Tamponi']['diff']:+n})_\n"
 
-    for o in outline:
+    msg += f"\n_Dettagli_:\n"
+
+    for o in [m for m in outline if m != 'Tamponi']:
         t = outline[o]['today']
         d = outline[o]['diff']
         if o == 'Tot. Casi':
@@ -458,6 +468,7 @@ def key(update, context):
         "\t\t- le persone guarite\n"
         "\t\t- i decessi\n\n"
         "- *Positivi*: il numero delle persone attualmente positive\n\n"
+        "- *Tamponi*: il numero di tamponi effettuati. Vengono conteggiati sia i tamponi diagnostici che quelli di controllo\n"
     )
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
