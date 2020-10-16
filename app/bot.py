@@ -137,7 +137,7 @@ def render_data_and_chart(data, ascii=False):
     # Recap
     msg += f"\nNuovi casi: *{int(today['nuovi_positivi']):n}*"
     # Number of tests
-    msg += f"\nTamponi: *{outline['Tamponi']['today']:n}* _({outline['Tamponi']['diff']:+n})_\n"
+    msg += f"\nNuovi Tamponi: *{outline['Tamponi']['today']:n}*, _{outline['Tamponi']['diff']:+n}_ rispetto a ieri\n"
 
     msg += f"\n_Dettagli_:\n"
 
