@@ -146,7 +146,7 @@ def render_data_and_chart(data, ascii=False):
         d = outline[o]['diff']
         if o == 'Tot. Casi':
             msg += f"\n`_____________________________`"
-        msg += f"\n`{o:>11}: {t:>7n} ({f'{d:+n}':>6})`"
+        msg += f"\n`{o:>10}: {t:>7n} ({f'{d:+n}':>7})`"
 
     msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
 
@@ -600,7 +600,7 @@ def reply(update, context):
 def send_reply(update, context):
     """Send a reply"""
     id = context.chat_data['reply_to']
-    context.bot.send_message(chat_id=id, text='Questo messaggio è visibile solo a te:\n\n' + update.message.text)
+    context.bot.send_message(chat_id=id, text='Questo messaggio è visibile solo a te:\n\n' + update.message.text + '\n\nPremi /feedback per continuare la conversazione')
     msg = f'Replied to {id}!'
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
     return ConversationHandler.END
