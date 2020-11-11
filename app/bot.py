@@ -124,7 +124,7 @@ def render_data_and_chart(data, ascii=False):
             'today' : int(today['deceduti']),
             'diff'  : int(today['deceduti']) - int(yesterday['deceduti'])
         },
-        'Tot. Casi' : {
+        'Tot.Casi' : {
             'today' : int(today['totale_casi']),
             'diff'  : int(today['nuovi_positivi'])
         },
@@ -144,9 +144,9 @@ def render_data_and_chart(data, ascii=False):
     for o in [m for m in outline if m != 'Tamponi']:
         t = outline[o]['today']
         d = outline[o]['diff']
-        if o == 'Tot. Casi':
+        if o == 'Tot.Casi':
             msg += f"\n`_____________________________`"
-        msg += f"\n`{o:>10}: {t:>7n} ({f'{d:+n}':>7})`"
+        msg += f"\n`{o:>8}: {t:>9n} ({f'{d:+n}':>7})`"
 
     msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
 
