@@ -9,6 +9,7 @@ then
     git clone ${REPO_URL} _data/repo
 else
     echo 'Pulling data from the repo'
+    git -C _data/repo/ checkout .
     git -C _data/repo/ pull
 fi
 
