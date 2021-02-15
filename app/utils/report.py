@@ -156,8 +156,10 @@ class Report(object):
             except Exception as e:
                 pass
 
-
-        print(f'{sent} notification(s) sent 👍')
+        # Send reports
+        report = f'{sent} notification(s) sent 👍'
+        updater.bot.send_message(chat_id=misc.get_env_variable('DEV'), text=report, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+        print(report)
 
 
 
