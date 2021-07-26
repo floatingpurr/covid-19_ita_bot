@@ -9,7 +9,10 @@ then
     git clone ${REPO_URL} _data/repo
 else
     echo 'Pulling data from the repo'
-    git -C _data/repo/ checkout .
+    # Ugly workaround to avoid the line endings mismatch
+    git -C _data/repo/ fetch
+    git -C _data/repo/ reset --hard origin/master
+    # Pull new data
     git -C _data/repo/ pull
 fi
 
