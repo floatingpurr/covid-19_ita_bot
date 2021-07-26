@@ -150,7 +150,7 @@ def plotify(title, data, key):
     plt.plot(dates, values, marker='o', color=color_map[key], linewidth=3)
     plt.xticks(rotation=90)
     bottom, top = plt.ylim()
-    plt.ylim(bottom=bottom, top=top*1.1)
+    plt.ylim(bottom=bottom, top=top)
     plt.tight_layout()
 
 
