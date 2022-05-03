@@ -21,7 +21,7 @@ services:
     # volumes:
     #   - ./app/:/app
     working_dir: /app
-    entrypoint: ['python', 'refresh.py']
+    entrypoint: ['sh', '/app/check_updates.sh']
     env_file:
       - .env
     depends_on:

@@ -84,7 +84,8 @@ class Report(object):
                 print("Cannot get locking info (probably it's a first run)")
 
             # set metadata
-            self._set_meta(md5, d.get_date())
+            report_date = d.get_date() # datetime
+            self._set_meta(md5, report_date)
 
             # preprocess data
             data = d.get_json_data()
@@ -119,7 +120,12 @@ class Report(object):
 
             print('Data Updatated!')
 
-            self.notify_users()
+            # Notify users only for the current date
+            if datetime.datetime.now().date() == report_date.date():
+                print("Today's data")
+                self.notify_users()
+            else:
+                print('Notifications not sent')
 
 
     def notify_users(self):
