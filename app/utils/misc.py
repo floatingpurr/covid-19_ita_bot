@@ -11,6 +11,11 @@ import dateparser
 from ascii_graph import Pyasciigraph
 import matplotlib.pyplot as plt
 import io
+import locale
+
+
+
+locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
 
 
 
@@ -169,3 +174,19 @@ def plotify(title, data, key):
     gc.collect()
 
     return buf
+
+
+def human_format(num, signed=False):
+    """
+    Return a number in a human readable format
+    see: https://stackoverflow.com/a/45846841
+    """
+    num = float('{:.3g}'.format(num))
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    my_num = '{} {}'.format('{:n}'.format(num).rstrip('0').rstrip('.'), ['', 'mila', 'Mln.', 'G', 'T'][magnitude])
+    if signed and num > 0:
+        my_num = '+' + my_num
+    return my_num

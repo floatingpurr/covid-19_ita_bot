@@ -146,7 +146,7 @@ def render_data_and_chart(data, ascii=False):
         d = outline[o]['diff']
         if o == 'Tot.Casi':
             msg += f"\n`_____________________________`"
-        msg += f"\n`{o:>8}: {t:>9n} ({f'{d:+n}':>7})`"
+        msg += f"\n`{o:>8}: {misc.human_format(t):>9} ({f'{d:+n}':>7})`"
 
     msg += '\n\n_(Tra parentesi le variazioni nelle ultime 24h)_'
 
@@ -162,10 +162,10 @@ def render_table(data, label, tot_key, diff_key):
     table = ''
 
     for d in data:
-        item = d[label][:10] + (d[label][10:] and '.')
+        item = d[label][:7] + (d[label][7:] and '.')
         tot = d[tot_key]
         diff = d[diff_key]
-        table += f"\n`{item:>11}: {tot:>7n} ({f'{diff:+n}':>6})`"
+        table += f"\n`{item:>8}: {misc.human_format(tot):>9} ({f'{diff:+n}':>7})`"
 
     return table
 
@@ -377,19 +377,19 @@ def region(update, context):
             if d['_id'].lower() == 'in fase di definizione/aggiornamento':
                 remainder = d['totale_casi']
                 continue
-            elif len(d['_id']) > 11:
-                prov = d['_id'][:10] + '.'
+            elif len(d['_id']) > 8:
+                prov = d['_id'][:7] + '.'
             else:
                 prov = d['_id']
         
             cases = d['totale_casi']
             diff = d['diff']
 
-            msg += f"\n`{prov:>11}: {cases:>7n} ({f'{diff:+n}':>6})`"
+            msg += f"\n`{prov:>8}: {misc.human_format(cases):>9} ({f'{diff:+n}':>7})`"
 
         msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
 
-        msg +=f'\n\n_*{remainder} casi in fase di aggiornamento_'
+        msg +=f'\n\n_*{remainder:n} casi in fase di aggiornamento_'
 
 
         # get plot
@@ -441,7 +441,7 @@ def province(update, context):
     today_cases= data[-1]['totale_casi']
     yesterday_cases = data[-2]['totale_casi']
     delta = today_cases - yesterday_cases
-    msg += f"\n`{'Tot. Casi':>12}: {today_cases:>6n} ({f'{delta:+n}':>6})`"
+    msg += f"\n`{'Tot. Casi':>8}: {misc.human_format(today_cases):>9} ({f'{delta:+n}':>7})`"
 
     msg += '\n\n_(Tra parentesi i nuovi casi nelle ultime 24h)_'
     
