@@ -181,12 +181,15 @@ def human_format(num, signed=False):
     Return a number in a human readable format
     see: https://stackoverflow.com/a/45846841
     """
+    if num == 1000:
+        return 1000
+
     num = float('{:.3g}'.format(num))
     magnitude = 0
     while abs(num) >= 1000:
         magnitude += 1
         num /= 1000.0
-    my_num = '{} {}'.format('{:n}'.format(num).rstrip('0').rstrip('.'), ['', 'mila', 'Mln.', 'G', 'T'][magnitude])
+    my_num = '{} {}'.format('{:f}'.format(num).rstrip('0').rstrip('.').replace('.',','), ['', 'mila', 'Mln.', 'G', 'T'][magnitude])
     if signed and num > 0:
         my_num = '+' + my_num
     return my_num
