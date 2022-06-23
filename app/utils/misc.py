@@ -181,8 +181,8 @@ def human_format(num, signed=False):
     Return a number in a human readable format
     see: https://stackoverflow.com/a/45846841
     """
-    if num == 1000:
-        return 1000
+    if num <= 1005:
+        return num
 
     num = float('{:.3g}'.format(num))
     magnitude = 0
