@@ -288,10 +288,10 @@ def weekly_aggregation(update, context):
 
 
 @send_typing_action
-def weekly_summary(update, context):
-    """New cases per week, summaary"""
+def weekly_summary(update, context, current=False):
+    """New cases per week, summary"""
     logger.info(f"User {update.message.from_user} requested weekly summary")
-    data = R.get_weekly_summary()
+    data = R.get_weekly_summary(current=current)
 
     msg = f'*Crescita settimanale dei nuovi casi*\n_dal {data["totale"]["settimana_del"]:%d-%b} al {data["totale"]["settimana_fino_al"]:%d-%b}_\n\n'
     icons = misc.get_icons(data["totale"]["delta"], data["totale"]["delta_delta"])
@@ -311,6 +311,11 @@ def weekly_summary(update, context):
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
     
     
+def weekly_summary_partial(update, context):
+    """New cases per week, summary with partial data"""
+    weekly_summary(update, context, current=True)
+    
+
 @send_typing_action
 def new_cases_per_province(update, context):
     """Today's new cases per province"""
@@ -699,6 +704,7 @@ def main():
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('italia', nation))
     dp.add_handler(CommandHandler('semaforo', weekly_summary))
+    dp.add_handler(CommandHandler('test', weekly_summary_partial)) # not listed
     dp.add_handler(CommandHandler('positivi_regione', positive_cases_per_region))
     dp.add_handler(CommandHandler('nuovi_regione', new_cases_per_region))
     dp.add_handler(CommandHandler('help', help))
@@ -791,7 +797,7 @@ def main():
     if misc.get_env_variable('CONTEXT') == 'Production':
         dp.add_error_handler(error)
 
-    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/settimanale|\/next|\/msg|\/feedback|\/reply)$')), unknown))
+    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/settimanale|\/next|\/msg|\/feedback|\/reply|\/test)$')), unknown))
 
     # Start the Bot
     updater.start_polling()
