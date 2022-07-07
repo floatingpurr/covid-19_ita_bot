@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import datetime
 import json
 import time
@@ -114,36 +115,37 @@ class Report(object):
             # set keyboards options according to new values
             self._set_keyboards()
 
+            # Compute weekly aggregates
+            self._compute_aggregates()
+
             # remove lock
             self._unlock_collection()
 
             print('Data Updatated!')
 
-            self.notify_users()
+            days = 15
+            data = self.get_national_total_cases(days)
+
+            msg = (
+                f"*Aggiornamento dati COVID19 Italia*\n"
+                f"*{data[-1]['data']:%a %d %B h.%H:%M}*\n\n"
+                f"🇮🇹 *Dati nazionali*:\n"
+            )
+            from bot import render_data_and_chart # fix circular import, the ugly way
+            msg += render_data_and_chart(data = data)
+
+            msg += "\n\n_Digita_ /help _per i dettagli_"
+
+            self.notify_users(msg)
 
 
-    def notify_users(self):
+    def notify_users(self, msg):
         """Notify Bot Users"""
-
-        from bot import render_data_and_chart
 
         # users file
         pp = PicklePersistence(filename='_data/conversationbot')
 
         updater = Updater(misc.get_env_variable('API_KEY'), persistence=pp)
-
-        days = 15
-        data = self.get_national_total_cases(days)
-
-        msg = (
-            f"*Aggiornamento dati COVID19 Italia*\n"
-            f"*{data[-1]['data']:%a %d %B h.%H:%M}*\n\n"
-            f"🇮🇹 *Dati nazionali*:\n"
-        )
-
-        msg += render_data_and_chart(data = data)
-
-        msg += "\n\n_Digita_ /help _per i dettagli_"
 
         i = 0
         sent = 0
@@ -161,6 +163,26 @@ class Report(object):
         updater.bot.send_message(chat_id=misc.get_env_variable('DEV'), text=report, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
         print(report)
 
+
+    def notify_weekly(self):
+        """New cases per week, notification"""
+        data = self.get_weekly_summary()
+
+        msg = f'*Aggiornamento settimanale crescita nuovi casi*\n_Settimana: {data["totale"]["settimana_del"]:%d-%b} - {data["totale"]["settimana_fino_al"]:%d-%b}_\n\n'
+        icons = misc.get_icons(data["totale"]["delta"], data["totale"]["delta_delta"])
+        msg += f'{icons[0]} {icons[1]} *Italia* 🇮🇹\n'
+
+        areas = ['Nord', 'Centro', 'Sud e Isole']
+
+        for area in areas:
+            msg += f'\n\n*{area}*:\n'
+            regions = data[area]
+            for region in regions:
+                icons = misc.get_icons(regions[region]["delta"], regions[region]["delta_delta"])
+                msg += f'{icons[0]} {icons[1]} {region}\n'
+
+        msg += '\n\n_(Usa il comando /settimanale per esplorare i dettagli)_'
+        self.notify_users(msg)
 
 
     def get_meta(self):
@@ -242,6 +264,63 @@ class Report(object):
 
         # create the index on keyboard name
         settings.MONGO_DB['keyboards'].create_index('keyboard_name')
+
+    
+    def _compute_aggregates(self):
+        """ Compute week aggregates """
+
+        print('Computing aggregates...') # Move this print to the logger
+
+        collection = settings.MONGO_DB['week_temp']
+
+        # compute national cases
+        settings.MONGO_DB['nation'].aggregate([
+                    {
+                        "$group":
+                        {
+                            "_id": { 
+                                "area"  : "Italia 🇮🇹",
+                                "isoYear": {"$isoWeekYear": "$data" },
+                                "isoWeek" : {"$isoWeek": "$data" },
+                            
+                            },
+                            "nuovi_positivi": { "$sum": "$nuovi_positivi" },
+                            "giorni": {"$sum": 1},
+                            "settimana_del" : {"$min" : "$data"},
+                            "settimana_fino_al" : {"$max" : "$data"},
+                        }
+                    },
+                    {"$merge": "week_temp"}
+                    ])
+
+        # compute regional cases
+        settings.MONGO_DB['regions'].aggregate([
+                    {
+                        "$group":
+                        {
+                            "_id": { 
+                                "area"  : "$denominazione_regione",
+                                "isoYear": {"$isoWeekYear": "$data" },
+                                "isoWeek" : {"$isoWeek": "$data" },
+                            
+                            },
+                            "nuovi_positivi": { "$sum": "$nuovi_positivi" },
+                            "giorni": {"$sum": 1},
+                            "settimana_del" : {"$min" : "$data"},
+                            "settimana_fino_al" : {"$max" : "$data"},
+                        }
+                    },
+                    {"$merge": "week_temp"}
+                    ])
+
+
+        # create indexes
+        print('Creating indexes...')  # Move this print to the logger
+        indexes = settings.AGGREGATIONS['week']['indexes']
+        collection.create_indexes(indexes)
+
+        settings.MONGO_DB[f'week_temp'].rename('week', dropTarget=True)
+
 
 
     def get_national_total_cases(self, days):
@@ -358,6 +437,64 @@ class Report(object):
             data.append(d)
         return data
 
+
+    def get_weekly_cases(self, area=None, limit=None, current=True):
+        """
+        Get weekly cases
+        """
+        query = [
+                    { "$match" : {"_id.area": area}},
+                    { "$project" : {"_id" : 0 , "isoYear" : "$_id.isoYear", "isoWeek" : "$_id.isoWeek", "isoWeek" : "$_id.isoWeek", "giorni":1, "nuovi_positivi":1, "settimana_del":1,"settimana_fino_al":1}},
+                    { "$sort" : { "isoYear" : -1, "isoWeek": -1} },
+                    { "$limit": limit}
+                ]
+
+        if not current:
+            query[0]["$match"]['giorni'] = {"$eq" : 7} 
+
+
+        resultset = settings.MONGO_DB["week"].aggregate(query)
+
+        rawData = list(resultset)
+
+
+        data = []
+
+        for i, d in enumerate(rawData):
+
+            try:
+                d['delta'] = d['nuovi_positivi'] - rawData[i + 1]['nuovi_positivi']
+                d['delta_delta'] = d['nuovi_positivi'] - 2 * rawData[i + 1]['nuovi_positivi'] + rawData[i + 2]['nuovi_positivi']
+            except IndexError:
+                pass
+
+            
+            data.append(d)
+        
+        return data
+
+
+    def get_weekly_summary(self, current=False):
+        """
+        Get weekly summary
+        """
+        areas = {
+            "Nord" : ["Emilia-Romagna", "Friuli Venezia Giulia", "Liguria", "Lombardia", "P.A. Bolzano", "P.A. Trento", "Piemonte", "Valle d'Aosta", "Veneto",],
+            "Centro" : [ "Lazio", "Marche", "Toscana", "Umbria",],
+            "Sud e Isole" : [ "Abruzzo", "Basilicata", "Calabria", "Campania", "Molise", "Puglia", "Sardegna", "Sicilia", ]
+        }
+
+        data = {}
+        
+        data['totale'] = self.get_weekly_cases(area='Italia 🇮🇹', limit=3, current=current)[0]
+
+        for area in areas:
+            data[area] = OrderedDict()
+            for r in areas[area]:
+                data[area][r] = self.get_weekly_cases(area=r, limit=3, current=current)[0]
+        
+        return data
+        
 
     def get_province_cases(self, province, days):
         """ Get cases of a `province` of last `days` """

@@ -1,4 +1,6 @@
 italia - Dati aggregati a livello nazionale
+settimanale - Andamento settimanale dei nuovi casi
+semaforo - Variazione settimanale dei nuovi casi sul territorio
 regione - Dati per regione
 provincia - Dati per provincia
 positivi_regione - Attualmente positivi per ogni regione

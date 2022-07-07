@@ -31,6 +31,15 @@ DATA = {
     }
 }
 
+AGGREGATIONS = {
+    'week' :{
+        'file_name' : None, # not necessary
+        'indexes' : [
+            pymongo.IndexModel([("_id.area", pymongo.DESCENDING), ("_id.isoYear", pymongo.DESCENDING), ("_id.isoWeek", pymongo.DESCENDING)]),
+        ],
+    }
+}
+
 
 # Path for downloaded files (in the repository)
 DATA_PATH = os.path.dirname(os.path.dirname(__file__))+'/_data/repo/dati-json'

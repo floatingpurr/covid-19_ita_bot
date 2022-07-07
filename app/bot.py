@@ -27,7 +27,7 @@ locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
 
 # Conversation states
 IT = 0
-REGION, PROVINCE = range(2)
+REGION, PROVINCE, AREA = range(3)
 CHECK, BROADCAST = range(2)
 FEEDBACK = 0
 SEND_REPLY = 0
@@ -35,6 +35,8 @@ SEND_REPLY = 0
 # Commands rendering
 COMMANDS = (
     "/italia - Dati aggregati a livello nazionale\n"
+    "/settimanale - Andamento settimanale dei nuovi casi\n"
+    "/semaforo - Variazione settimanale dei nuovi casi sul territorio\n"
     "/regione - Dati per regione\n"
     "/provincia - Dati per provincia\n"
     "/positivi\_regione - Attualmente positivi per ogni regione\n"
@@ -43,7 +45,7 @@ COMMANDS = (
     "/feedback - invia un feedback o segnala un problema\n"
     "/help - Istruzioni di utilizzo\n"
     "/legenda - Legenda per capire i dati\n"
-    "/credits - Informazioni su questo bot\n\n"
+    "/credits - Informazioni su questo bot"
 )
 
 # the main report object
@@ -266,6 +268,50 @@ def new_cases_per_region(update, context):
 
 
 @send_typing_action
+def weekly_aggregation(update, context):
+    """New cases per week"""
+    text = update.message.text
+    logger.info(f"User {update.message.from_user} requested weekly aggregation for {text}")
+    data = R.get_weekly_cases(area=text, limit=10)
+
+    if not data:
+        # exit and use ReplyKeyboardRemove() to clear stale keys
+        update.message.reply_text(f'Nessun dato disponibile per {text}', reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END 
+
+    # get plot
+    area_in_title = text.encode("ascii", "ignore").decode('utf-8').rstrip() # remove non-ascii trailing characters (e.g., Emoji)
+    plot = misc.plotify_bar(title=f'Trend nuovi casi per settimana ({area_in_title})', data = data)
+
+    # use ReplyKeyboardRemove() to clear stale keys
+    update.message.reply_photo(caption=f'Nuovi casi raggruppati per settimana ({area_in_title})', photo=plot, reply_markup=ReplyKeyboardRemove())
+
+
+@send_typing_action
+def weekly_summary(update, context):
+    """New cases per week, summaary"""
+    logger.info(f"User {update.message.from_user} requested weekly summary")
+    data = R.get_weekly_summary()
+
+    msg = f'*Crescita settimanale dei nuovi casi*\n_dal {data["totale"]["settimana_del"]:%d-%b} al {data["totale"]["settimana_fino_al"]:%d-%b}_\n\n'
+    icons = misc.get_icons(data["totale"]["delta"], data["totale"]["delta_delta"])
+    msg += f'{icons[0]} {icons[1]} *Italia* 🇮🇹\n'
+
+    areas = ['Nord', 'Centro', 'Sud e Isole']
+
+    for area in areas:
+        msg += f'\n\n*{area}*:\n'
+        regions = data[area]
+        for region in regions:
+            icons = misc.get_icons(regions[region]["delta"], regions[region]["delta_delta"])
+            msg += f'{icons[0]} {icons[1]} {region}\n'
+
+    msg += '\n\n_(dati aggiornati ogni fine settimana)_'
+    # use ReplyKeyboardRemove() to clear stale keys
+    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+    
+    
+@send_typing_action
 def new_cases_per_province(update, context):
     """Today's new cases per province"""
 
@@ -342,6 +388,24 @@ def choose_region(update, context):
  
     update.message.reply_text(msg, reply_markup=reply_markup)
     return REGION
+
+
+@send_typing_action
+def choose_area(update, context):
+    """A function for managing the first step of a conversation for weekly data"""
+
+    # Build the keyboard dynamically
+    keyboard = get_keyboard('italy')
+    keyboard.insert(0, ["Italia 🇮🇹"])
+
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+
+    # save the user choice for the conversation
+    text = update.message.text
+    context.chat_data['choice'] = text
+
+    update.message.reply_text('Selezionare un\'area per il report settimanale', reply_markup=reply_markup)
+    return AREA
 
 
 @send_typing_action  
@@ -482,7 +546,6 @@ def help(update, context):
     msg = (
         "*Comandi disponibili*:\n\n"
         f"{COMMANDS}"
-        "*#tuttoandràbene* 🌈"
     )
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
 
@@ -496,8 +559,7 @@ def credits(update, context):
         "- [Contatti](https://twitter.com/i_m_andrea) per info e segnalazioni su questo bot\n\n"
         "- I [dati usati da questo bot](https://github.com/pcm-dpc/COVID-19) vengono rilasciati dalla Protezione Civile ogni giorno attorno alle ore 18:00\n\n"
         "- Il codice di questo bot è disponibile a [questo link](https://github.com/floatingpurr/covid-19_ita_bot)\n\n"
-        "- Bot Icon by Freepik (https://www.flaticon.com/)\n\n"
-        "*#tuttoandràbene* 🌈"
+        "- Bot Icon by Freepik (https://www.flaticon.com/)"
     )
 
     update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove(), disable_web_page_preview=True)
@@ -550,7 +612,7 @@ def broadcast(update, context):
             time.sleep(1) # avoids the bot ban :)
         logger.info(f"Sending data to {chat}...")
         try:
-            context.bot.send_message(chat_id=chat, text=update.message.text)
+            context.bot.send_message(chat_id=chat, parse_mode=ParseMode.MARKDOWN, text=update.message.text)
         except Exception as e:
             print(e)
 
@@ -636,6 +698,7 @@ def main():
     # Basic command handlers
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('italia', nation))
+    dp.add_handler(CommandHandler('semaforo', weekly_summary))
     dp.add_handler(CommandHandler('positivi_regione', positive_cases_per_region))
     dp.add_handler(CommandHandler('nuovi_regione', new_cases_per_region))
     dp.add_handler(CommandHandler('help', help))
@@ -662,11 +725,13 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('provincia', choose_region),
-            CommandHandler('regione', choose_region)
+            CommandHandler('regione', choose_region),
+            CommandHandler('settimanale', choose_area)
             ],
         states={
             REGION: [MessageHandler(Filters.text & (~ Filters.command), region)],
             PROVINCE : [MessageHandler(Filters.text & (~ Filters.command), province)],
+            AREA : [MessageHandler(Filters.text & (~ Filters.command), weekly_aggregation)],
         },
         fallbacks=[MessageHandler(Filters.command, cancel)],
         allow_reentry=True
@@ -726,7 +791,7 @@ def main():
     if misc.get_env_variable('CONTEXT') == 'Production':
         dp.add_error_handler(error)
 
-    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/next|\/msg|\/feedback|\/reply)$')), unknown))
+    dp.add_handler(MessageHandler(Filters.command & (~ Filters.regex('^(\/regione|\/provincia|\/nuovi_provincia|\/settimanale|\/next|\/msg|\/feedback|\/reply)$')), unknown))
 
     # Start the Bot
     updater.start_polling()
