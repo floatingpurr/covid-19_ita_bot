@@ -147,6 +147,10 @@ class Report(object):
 
         updater = Updater(misc.get_env_variable('API_KEY'), persistence=pp)
 
+        # get aggregated national data
+        data = self.get_weekly_cases(area="Italia 🇮🇹", limit=10)
+        plot = misc.plotify_bar(title=f'Trend nuovi casi per settimana (Italia)', data = data)
+
         i = 0
         sent = 0
         for i, chat in enumerate(updater.dispatcher.chat_data.keys(), start=1):
@@ -154,6 +158,7 @@ class Report(object):
                 time.sleep(1) # avoids the bot ban :)
             try:
                 updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+                updater.bot.send_photo(chat_id=chat, caption=f'Trend settimanale nuovi casi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
                 sent += 1
             except Exception as e:
                 pass
