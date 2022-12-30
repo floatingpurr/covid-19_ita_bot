@@ -161,6 +161,7 @@ class Report(object):
                 updater.bot.send_photo(chat_id=chat, caption=f'Trend settimanale nuovi casi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
                 sent += 1
             except Exception as e:
+                print(e)
                 pass
 
         # Send reports
