@@ -136,10 +136,10 @@ class Report(object):
 
             msg += "\n\n_Digita_ /help _per i dettagli_"
 
-            self.notify_users(msg)
+            self.notify_users(msg, aggregation_detail=True)
 
 
-    def notify_users(self, msg):
+    def notify_users(self, msg, aggregation_detail=False):
         """Notify Bot Users"""
 
         # users file
@@ -158,8 +158,10 @@ class Report(object):
                 time.sleep(1) # avoids the bot ban :)
             try:
                 updater.bot.send_message(chat_id=chat, text=msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
-                updater.bot.send_photo(chat_id=chat, caption=f'Trend settimanale nuovi casi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
+                if aggregation_detail:
+                    updater.bot.send_photo(chat_id=chat, caption=f'Trend settimanale nuovi casi (Italia)', photo=plot, reply_markup=ReplyKeyboardRemove())
                 sent += 1
+                print(sent) #TODO: remove asap
             except Exception as e:
                 print(e)
                 pass
