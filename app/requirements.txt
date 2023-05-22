@@ -28,7 +28,7 @@ python-telegram-bot==12.4.2
 pytz==2021.3
 pytz-deprecation-shim==0.1.0.post0
 regex==2021.11.10
-requests==2.27.1
+requests==2.31.0
 six==1.16.0
 tornado==6.1
 traitlets==5.1.1
