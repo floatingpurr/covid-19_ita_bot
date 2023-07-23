@@ -1,7 +1,7 @@
 ascii-graph==1.5.1
 backcall==0.2.0
 backports.zoneinfo==0.2.1
-certifi==2021.10.8
+certifi==2022.12.7
 cffi==1.15.0
 chardet==3.0.4
 cryptography==36.0.0
